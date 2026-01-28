@@ -1,33 +1,29 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ChatMessage } from '@/types/lms';
+import { sendChatMessage, systemPrompt, ChatMessage as OpenAIChatMessage } from '@/lib/openai';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const initialMessages: ChatMessage[] = [
   {
     id: '1',
-    content: "Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.",
+    content: "Hello! I'm your AI learning assistant powered by OpenAI. How can I help you today? I can answer questions about your courses, explain programming concepts, or guide you through the platform.",
     sender: 'bot',
     timestamp: new Date().toISOString(),
   },
 ];
-
-const botResponses: Record<string, string> = {
-  default: "I'm here to help! You can ask me about your courses, deadlines, or any technical questions. Try asking about React, JavaScript, or how to submit your tasks.",
-  react: "React is a JavaScript library for building user interfaces. In your current module, you're learning about components, props, and hooks. Would you like me to explain any of these concepts in more detail?",
-  deadline: "Your upcoming deadlines:\n• React Todo App - Feb 15\n• Data Visualization Dashboard - Feb 20\n\nWould you like help getting started on any of these?",
-  submit: "To submit a task:\n1. Go to the Tasks section\n2. Find your assignment\n3. Click 'Submit Task'\n4. Paste your GitHub repository link\n5. Click Submit\n\nMake sure your repo is public so facilitators can review it!",
-  help: "Here are some things I can help with:\n• Explain technical concepts\n• Guide you through the platform\n• Answer questions about your courses\n• Provide study tips and resources\n\nWhat would you like to know?",
-};
 
 const AIChatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const conversationHistory = useRef<OpenAIChatMessage[]>([systemPrompt]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -37,24 +33,7 @@ const AIChatbot: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  const getBotResponse = (message: string): string => {
-    const lowerMessage = message.toLowerCase();
-    if (lowerMessage.includes('react') || lowerMessage.includes('component')) {
-      return botResponses.react;
-    }
-    if (lowerMessage.includes('deadline') || lowerMessage.includes('due')) {
-      return botResponses.deadline;
-    }
-    if (lowerMessage.includes('submit') || lowerMessage.includes('github')) {
-      return botResponses.submit;
-    }
-    if (lowerMessage.includes('help') || lowerMessage.includes('what can')) {
-      return botResponses.help;
-    }
-    return botResponses.default;
-  };
-
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
     const userMessage: ChatMessage = {
@@ -67,18 +46,41 @@ const AIChatbot: React.FC = () => {
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
+    setError(null);
 
-    // Simulate bot typing delay
-    setTimeout(() => {
+    // Add user message to conversation history
+    conversationHistory.current.push({
+      role: 'user',
+      content: input,
+    });
+
+    try {
+      // Get AI response
+      const aiResponse = await sendChatMessage(conversationHistory.current);
+
+      // Add assistant response to conversation history
+      conversationHistory.current.push({
+        role: 'assistant',
+        content: aiResponse,
+      });
+
       const botMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: getBotResponse(input),
+        content: aiResponse,
         sender: 'bot',
         timestamp: new Date().toISOString(),
       };
+      
       setMessages((prev) => [...prev, botMessage]);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      
+      // Remove the last user message from history if there was an error
+      conversationHistory.current.pop();
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -126,6 +128,12 @@ const AIChatbot: React.FC = () => {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           {messages.map((message) => (
             <div
               key={message.id}

@@ -11,11 +11,14 @@ A modern Learning Management System built for CodeTribe Academy. This platform p
 - **Tasks**: Assignment tracking and submission
 - **Progress**: Visual representation of your learning journey
 - **Announcements**: Stay updated with the latest news
-- **AI Chatbot**: Get help with your learning
+- **AI Chatbot**: Real-time AI assistant powered by OpenAI to help with your learning
+
+## Prerequisites
+
+- Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- OpenAI API key - [Get one here](https://platform.openai.com/api-keys)
 
 ## How to Run
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
 Follow these steps:
 
@@ -29,9 +32,24 @@ cd lms-chatbot-main
 # Step 3: Install the necessary dependencies
 npm install
 
-# Step 4: Start the development server
+# Step 4: Set up environment variables
+# Create a .env.local file and add your OpenAI API key:
+# VITE_OPENAI_API_KEY=your_api_key_here
+
+# Step 5: Start the development server
 npm run dev
 ```
+
+## Getting Your OpenAI API Key
+
+1. Go to [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Sign up or log in to your account
+3. Navigate to API Keys section
+4. Click "Create new secret key"
+5. Copy the key and add it to your `.env.local` file
+6. **Important**: Add billing information to your OpenAI account to use the API
+
+**Note**: The API is not free, but OpenAI provides $5 in free credits for new users. Monitor your usage at [OpenAI Usage Dashboard](https://platform.openai.com/usage).
 
 ## Technologies Used
 
@@ -42,6 +60,7 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- OpenAI API (GPT-3.5-turbo)
 
 ## Deployment
 

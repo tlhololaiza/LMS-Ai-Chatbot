@@ -2,8 +2,8 @@ import { User, Course, Task, Announcement } from '@/types/lms';
 
 export const currentUser: User = {
   id: '1',
-  name: 'Sarah Molefe',
-  email: 'sarah.molefe@example.com',
+  name: 'Tlholo Tswhane',
+  email: 'tshwane@gmail.com',
   role: 'learner',
   avatar: undefined,
   enrolledCourses: ['1', '2', '3', '4', '5'],
