@@ -51,8 +51,8 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, isExpanded, onToggle, o
               )}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <h4 className="font-medium truncate">{module.title}</h4>
-              <p className="text-sm text-muted-foreground">
+              <h4 className="font-medium truncate select-text">{module.title}</h4>
+              <p className="text-sm text-muted-foreground select-text">
                 {completedLessons}/{module.lessons.length} lessons • {progress}% complete
               </p>
             </div>

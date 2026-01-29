@@ -42,13 +42,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onSubmit }) => {
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-medium truncate">{task.title}</h4>
+            <h4 className="font-medium truncate select-text">{task.title}</h4>
             <span className={cn('status-badge', config.className)}>
               <StatusIcon className="w-3 h-3 mr-1" />
               {config.label}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-3 select-text">
             {task.description}
           </p>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
