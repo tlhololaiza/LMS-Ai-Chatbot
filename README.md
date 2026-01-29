@@ -260,13 +260,33 @@ npm run test:watch   # Run tests in watch mode
 
 **🔗 View:** [text-highlight branch on GitHub](https://github.com/tlhololaiza/LMS-Ai-Chatbot/tree/text-highlight)
 
-#### 📋 Phase 2: Chatbot Context System (PLANNED)
+#### ✅ Phase 2: Chatbot Context System (COMPLETE)
 **Branch:** `feature/chatbot-context-system`
 
-**Tasks:**
-- [ ] Task 2.1: Extend Type Definitions
-- [ ] Task 2.2: Create Chat Context Manager
-- [ ] Task 2.3: Build Prompt Engineering System
+**Tasks Completed:**
+- [x] Task 2.1: Extend Type Definitions
+  - `src/types/lms.ts`
+  - Added ChatContextType, ChatMessageMetadata, enhanced ChatMessage
+  - ChatContext, AIPromptTemplate, PromptBuildContext interfaces
+  
+- [x] Task 2.2: Create Chat Context Manager
+  - `src/contexts/ChatContextProvider.tsx`
+  - Conversation history with localStorage persistence
+  - Message queue (max 100), highlights tracking (max 10)
+  - Context switching and profile management
+
+- [x] Task 2.3: Build Prompt Engineering System
+  - `src/utils/promptBuilder.ts`
+  - 4 specialized prompt templates
+  - Context-rich prompt construction
+  - Intent detection and concept summarization
+
+**Commits:**
+1. `90fed12` - feat(types): extend LMS types with AI context tracking
+2. `6678d8c` - feat(contexts): create ChatContextProvider for conversation state management
+3. `5b8fdd3` - feat(utils): create prompt engineering system with template-based AI context building
+
+**🔗 View:** [feature/chatbot-context-system branch on GitHub](https://github.com/tlhololaiza/LMS-Ai-Chatbot/tree/feature/chatbot-context-system)
 
 #### 📋 Phase 3: AI Backend Integration (PLANNED)
 **Branch:** `feature/ai-backend-integration`
@@ -292,8 +312,38 @@ npm run test:watch   # Run tests in watch mode
 - [ ] Task 5.2: Implement RAG
 - [ ] Task 5.3: Context-Aware Response Logic
 
-#### 📋 Phase 6-10: Future Phases
-- Phase 6: Conversation Flows
+#### ✅ Phase 6: Conversation Flows (COMPLETE)
+**Branch:** `feature/conversation-flows`
+
+**Tasks Completed:**
+- [x] Task 6.1: Design Conversation Flow System
+  - `src/utils/conversationFlows.ts`
+  - Flow states and transitions management
+  - Multi-step explanation handling
+  - Decision trees for common questions
+  
+- [x] Task 6.2: Implement Flow Templates
+  - `src/utils/flowTemplates.ts`
+  - **Concept Explanation Flow:** Acknowledge → Simple Definition → Detailed Explanation → Practical Example → Related Concepts → Check Understanding
+  - **Task Help Flow:** Understand Requirements → Break Down Steps → Code Examples → Resources → Debugging Tips → Check Comprehension
+  - **Navigation Help Flow:** Identify Goal → Step-by-Step Navigation → Visual Indicators → Alternative Paths → Confirm Found
+
+- [x] Task 6.3: Build Flow Engine
+  - `src/utils/flowEngine.ts`
+  - State machine implementation
+  - Progress tracking through flows
+  - Handle user interruptions (pause/resume)
+  - Flow restart capability
+  - Support for branching paths
+
+**Commits:**
+1. `108e6df` - feat(flows): design conversation flow system with state management
+2. `79a93e4` - feat(flows): implement predefined flow templates for common scenarios
+3. `c9d14e9` - feat(flows): build flow engine with state machine and progress tracking
+
+**🔗 View:** [feature/conversation-flows branch on GitHub](https://github.com/tlhololaiza/LMS-Ai-Chatbot/tree/feature/conversation-flows)
+
+#### 📋 Phase 7-10: Future Phases
 - Phase 7: Personalization
 - Phase 8: Analytics & Feedback
 - Phase 9: Advanced Features
@@ -366,6 +416,159 @@ All lesson content, module descriptions, and task descriptions are now selectabl
 4. Highlight any text (e.g., "React", "component")
 5. Click "Explain" button
 6. Watch AI explain the concept!
+
+---
+
+### ✨ What's Implemented (feature/conversation-flows branch)
+
+#### 1. Conversation Flow System
+**File:** `src/utils/conversationFlows.ts`
+
+Core flow management system with:
+- **Flow States:** `idle` | `started` | `in_progress` | `awaiting_response` | `completed` | `interrupted` | `failed`
+- **Flow Types:** `concept_explanation` | `task_help` | `navigation_help` | `progress_check` | `troubleshooting` | `resource_suggestion`
+- **Flow Architecture:**
+  - FlowStep interface with actions, validation, lifecycle hooks
+  - FlowAction for user interactions (next, skip, detail, example, restart, exit)
+  - FlowContext for state tracking and user data
+  - FlowTransitionManager for step-to-step navigation
+
+**Multi-Step Explanations:**
+```typescript
+class MultiStepExplanation {
+  addStep(level: 'simple' | 'intermediate' | 'detailed' | 'technical', content);
+  getNextStep(currentLevel): Step;
+}
+```
+
+**Decision Tree Routing:**
+```typescript
+buildCommonQuestionsTree(): DecisionTree
+navigateDecisionTree(tree, userInput): { flowId, nextNodeId }
+```
+
+#### 2. Predefined Flow Templates
+**File:** `src/utils/flowTemplates.ts`
+
+**🎓 Concept Explanation Flow:**
+1. **Acknowledge** - Greet and confirm the concept
+2. **Simple Definition** - Provide basic explanation
+3. **Detailed Explanation** - Break down in depth with key points
+4. **Practical Example** - Show real code examples
+5. **Related Concepts** - Suggest connected topics
+6. **Check Understanding** - Verify comprehension
+7. **Completion** - Encourage further learning
+
+**💻 Task Help Flow:**
+1. **Understand Requirements** - Clarify what's being asked
+2. **Clarify Requirements** - Explain in simpler terms if needed
+3. **Break Down Steps** - Provide step-by-step approach
+4. **Explain Step** - Detail specific steps
+5. **Code Examples** - Show working implementations
+6. **Suggest Resources** - Share helpful materials
+7. **Debugging Tips** - Common issues and solutions
+8. **Check Comprehension** - Verify readiness
+9. **Completion** - Motivational send-off
+
+**🧭 Navigation Help Flow:**
+1. **Identify Goal** - Understand what user is looking for
+2. **Navigate (Courses/Tasks/Progress)** - Step-by-step directions
+3. **Custom Navigation** - Handle unique requests
+4. **Alternative Path** - Show other ways to reach destination
+5. **Confirm Found** - Verify user found target
+6. **Completion** - Offer continued assistance
+
+**Usage:**
+```typescript
+const flow = createConceptExplanationFlow('React Hooks');
+const taskFlow = createTaskHelpFlow();
+const navFlow = createNavigationHelpFlow();
+```
+
+#### 3. Flow Engine (State Machine)
+**File:** `src/utils/flowEngine.ts`
+
+**FlowEngine Class Features:**
+
+🚀 **Flow Lifecycle:**
+```typescript
+startFlow(flow, trigger, userData): FlowContext
+executeAction(flowInstanceId, action, userInput): Result
+completeFlow(flowInstanceId): Result
+cancelFlow(flowInstanceId): Result
+```
+
+⏸️ **Interruption Handling:**
+```typescript
+handleInterruption(flowInstanceId, userMessage): {
+  shouldContinueFlow,
+  shouldPauseFlow,
+  shouldCancelFlow,
+  interpretation
+}
+resumeFlow(flowInstanceId): Result
+```
+
+🔄 **Flow Control:**
+```typescript
+restartFlow(flowInstanceId, fromStepId?): Result
+getFlowProgress(flowInstanceId): number  // 0-100%
+```
+
+📊 **State Management:**
+- Active flows tracking with Map
+- Flow history with complete audit trail
+- Progress calculation (steps completed / total steps)
+- Context persistence across steps
+
+🌳 **Branching Support:**
+```typescript
+class BranchEvaluator {
+  static evaluateBranch(condition, context): boolean
+  static findMatchingBranch(branches, context): stepId
+}
+```
+
+**Key Features:**
+- ✅ State machine with 7 states
+- ✅ Progress tracking (percentage completion)
+- ✅ Handle user interruptions (pause/resume/cancel)
+- ✅ Flow restart from any step
+- ✅ Conditional step execution
+- ✅ Lifecycle hooks (onEnter, onExit)
+- ✅ Input validation
+- ✅ Branching path support
+- ✅ Complete history tracking
+
+**Example Usage:**
+```typescript
+import { flowEngine } from './flowEngine';
+import { createConceptExplanationFlow } from './flowTemplates';
+
+// Start a flow
+const flow = createConceptExplanationFlow('useState');
+const context = flowEngine.startFlow(flow, {
+  text: 'Explain useState',
+  contextType: 'explanation',
+  metadata: { highlightedText: 'useState' }
+}, { highlightedText: 'useState' });
+
+// Execute action
+const result = flowEngine.executeAction(
+  context.flowInstanceId,
+  { id: 'continue', label: 'Continue', type: 'next', nextStep: 'simple_definition' }
+);
+
+// Check progress
+const progress = flowEngine.getFlowProgress(context.flowInstanceId); // 25%
+
+// Handle interruption
+const interrupt = flowEngine.handleInterruption(context.flowInstanceId, 'wait');
+// { shouldPauseFlow: true }
+
+// Resume
+flowEngine.resumeFlow(context.flowInstanceId);
+```
 
 ---
 
