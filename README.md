@@ -337,9 +337,9 @@ npm run test:watch   # Run tests in watch mode
   - Support for branching paths
 
 **Commits:**
-1. `[commit_hash]` - feat(flows): design conversation flow system with state management
-2. `[commit_hash]` - feat(flows): implement predefined flow templates for common scenarios
-3. `[commit_hash]` - feat(flows): build flow engine with state machine and progress tracking
+1. `108e6df` - feat(flows): design conversation flow system with state management
+2. `79a93e4` - feat(flows): implement predefined flow templates for common scenarios
+3. `c9d14e9` - feat(flows): build flow engine with state machine and progress tracking
 
 **🔗 View:** [feature/conversation-flows branch on GitHub](https://github.com/tlhololaiza/LMS-Ai-Chatbot/tree/feature/conversation-flows)
 
