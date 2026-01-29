@@ -1,9 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
+import React, { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { MessageCircle, X, Send, Bot, User, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ChatMessage } from '@/types/lms';
+
+export interface AIChatbotRef {
+  explainText: (text: string, context?: string) => void;
+  openChat: () => void;
+}
 
 const initialMessages: ChatMessage[] = [
   {
@@ -22,7 +27,12 @@ const botResponses: Record<string, string> = {
   help: "Here are some things I can help with:\n• Explain technical concepts\n• Guide you through the platform\n• Answer questions about your courses\n• Provide study tips and resources\n\nWhat would you like to know?",
 };
 
-const AIChatbot: React.FC = () => {
+const generateExplanation = (text: string, context?: string): string => {
+  const contextPreview = context && context.length > 100 ? context.substring(0, 100) + '...' : context;
+  return `Great question! Let me explain "${text}".\n\n🎯 **Quick Overview:**\nThis concept is an important part of your learning journey. Let me break it down for you.\n\n📖 **Detailed Explanation:**\n"${text}" refers to a fundamental concept in programming. ${contextPreview ? `\n\nI can see this appears in the context: "${contextPreview}"\n\n` : ''}Understanding this will help you progress through your course materials.\n\n💡 **Practical Example:**\nHere's how you might use this in your projects...\n\n🔗 **Related Topics:**\n• Make sure you understand the basics first\n• Practice with the examples in your lessons\n• Try implementing it in your assignments\n\n❓ Would you like me to elaborate on any specific aspect?`;
+};
+
+const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = useState('');
@@ -36,6 +46,42 @@ const AIChatbot: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  /**
+   * Expose methods to parent components via ref
+   */
+  useImperativeHandle(ref, () => ({
+    explainText: (text: string, context?: string) => {
+      // Open the chat if closed
+      setIsOpen(true);
+
+      // Create user message with highlighted text
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        content: `Please explain: "${text}"`,
+        sender: 'user',
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, userMessage]);
+      setIsTyping(true);
+
+      // Generate explanation response
+      setTimeout(() => {
+        const botMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          content: generateExplanation(text, context),
+          sender: 'bot',
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, botMessage]);
+        setIsTyping(false);
+      }, 1000);
+    },
+    openChat: () => {
+      setIsOpen(true);
+    },
+  }));
 
   const getBotResponse = (message: string): string => {
     const lowerMessage = message.toLowerCase();
@@ -193,6 +239,8 @@ const AIChatbot: React.FC = () => {
       </div>
     </>
   );
-};
+});
+
+AIChatbot.displayName = 'AIChatbot';
 
 export default AIChatbot;

@@ -181,7 +181,7 @@ const LessonViewer: React.FC<LessonViewerProps> = ({ lesson, moduleName, onClose
         <ScrollArea className="flex-1 p-4 md:p-8">
           <div className="max-w-4xl mx-auto">
             {lesson.content ? (
-              <div className="prose prose-slate dark:prose-invert max-w-none">
+              <div className="prose prose-slate dark:prose-invert max-w-none select-text">
                 {renderContent(lesson.content)}
               </div>
             ) : (
