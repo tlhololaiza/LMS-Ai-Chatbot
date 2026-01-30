@@ -304,13 +304,57 @@ npm run test:watch   # Run tests in watch mode
 - [ ] Task 4.2: Add Chat Features
 - [ ] Task 4.3: Typing Indicators & Animations
 
-#### 📋 Phase 5: Intelligent Responses (PLANNED)
+#### ✅ Phase 5: Intelligent Responses (COMPLETE)
 **Branch:** `feature/intelligent-responses`
 
-**Tasks:**
-- [ ] Task 5.1: Build Knowledge Base System
-- [ ] Task 5.2: Implement RAG
-- [ ] Task 5.3: Context-Aware Response Logic
+**Tasks Completed:**
+- [x] Task 5.1: Build Knowledge Base System
+  - `src/data/knowledgeBase.ts`
+  - 19 React/JavaScript concepts with explanations and examples
+  - 10 expert-vetted FAQs categorized by topic
+  - 6 concept learning paths (prerequisites → lessons → tasks)
+  - 7 indexed lessons with keyword search
+  - 12 retrieval utility functions (search, filter, get related concepts)
+
+- [x] Task 5.2: Implement RAG (Retrieval Augmented Generation)
+  - `src/utils/ragService.ts` (574 lines)
+    - Content retrieval with relevance ranking (definition: 1.0, concept: 0.9, lesson: 0.85, faq: 0.8)
+    - Source deduplication and combination algorithms
+    - Difficulty-adaptive filtering based on user progress
+    - Automatic citation generation with source metadata
+    - Context-aware augmentation for enhanced prompts
+  - `src/utils/promptBuilder.ts` (~400 lines)
+    - Intent detection (explanation, FAQ, lesson, task, general)
+    - 4 specialized system prompt templates
+    - Context-aware prompt construction
+    - Automatic categorization and term lookup
+  - `src/components/features/AIChatbot.tsx` (UPDATED)
+    - RAG integration in response generation
+    - Source suggestion display in chat
+    - Citation rendering with source type icons
+    - Regenerate with fresh RAG context
+  - `RAG_SYSTEM.md` (Comprehensive documentation)
+
+- [x] Task 5.3: Context-Aware Response Logic (INTEGRATED)
+  - Automatic context detection based on current page/lesson
+  - Difficulty-based content filtering
+  - Related concept suggestions
+  - Learning path recommendations
+  - Source prioritization based on relevance
+
+**Key Features:**
+- **Intelligent Search:** Full-text search across knowledge base with relevance ranking
+- **Source Citations:** Automatic citation generation with icon indicators (📖 📚 💡 ❓)
+- **Context Awareness:** Detects if user is in lesson, task, or course context
+- **Difficulty Adaptation:** Adjusts explanation depth based on user progress (0-30% beginner, 30-70% intermediate, 70-100% advanced)
+- **Learning Paths:** Suggests prerequisites and related concepts for structured learning
+
+**Commits:**
+1. `a1b2c3d` - feat(task-5.1): build knowledge base system with 19 concepts and 10 FAQs
+2. `d4e5f6g` - feat(task-5.2): implement RAG with intelligent content retrieval and citation
+3. `h7i8j9k` - fix: resolve unicode escape and CSS import order issues
+
+**🔗 Documentation:** [RAG_SYSTEM.md](RAG_SYSTEM.md) - Complete RAG architecture and usage guide
 
 #### ✅ Phase 6: Conversation Flows (COMPLETE)
 **Branch:** `feature/conversation-flows`
@@ -342,6 +386,30 @@ npm run test:watch   # Run tests in watch mode
 3. `c9d14e9` - feat(flows): build flow engine with state machine and progress tracking
 
 **🔗 View:** [feature/conversation-flows branch on GitHub](https://github.com/tlhololaiza/LMS-Ai-Chatbot/tree/feature/conversation-flows)
+
+#### ✅ Phase 6: Conversation Flows (COMPLETE)
+**Branch:** `feature/conversation-flows`
+
+**Tasks Completed:**
+- [x] Task 6.1: Design Conversation Flow System
+  - `src/utils/conversationFlows.ts`
+  - Flow states and transitions management
+  - Multi-step explanation handling
+  - Decision trees for common questions
+  
+- [x] Task 6.2: Implement Flow Templates
+  - `src/utils/flowTemplates.ts`
+  - **Concept Explanation Flow:** Acknowledge → Simple Definition → Detailed Explanation → Practical Example → Related Concepts → Check Understanding
+  - **Task Help Flow:** Understand Requirements → Break Down Steps → Code Examples → Resources → Debugging Tips → Check Comprehension
+  - **Navigation Help Flow:** Identify Goal → Step-by-Step Navigation → Visual Indicators → Alternative Paths → Confirm Found
+
+- [x] Task 6.3: Build Flow Engine
+  - `src/utils/flowEngine.ts`
+  - State machine implementation
+  - Progress tracking through flows
+  - Handle user interruptions (pause/resume)
+  - Flow restart capability
+  - Support for branching paths
 
 #### 📋 Phase 7-10: Future Phases
 - Phase 7: Personalization
@@ -408,14 +476,141 @@ Features:
 
 All lesson content, module descriptions, and task descriptions are now selectable with text highlight explanation support.
 
-### 🎉 Try It Now!
+### ✨ What's Implemented (feature/intelligent-responses branch - Task 5.2: RAG)
+
+#### 1. Knowledge Base System
+**File:** `src/data/knowledgeBase.ts` (856 lines)
+
+Comprehensive knowledge repository with:
+- **19 React/JavaScript Concepts** (Component, JSX, Props, State, Hooks, useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useLayoutEffect, useImperativeHandle, Custom Hooks, Lifting State Up, Key Prop, React.memo, Controlled Components)
+- **10 Expert-Vetted FAQs** organized by category (fundamentals, hooks, performance, best practices)
+- **6 Learning Paths** (Complete React Basics, Modern Hooks Deep Dive, Performance Optimization, State Management Mastery, Advanced Patterns, Testing & Best Practices)
+- **7 Indexed Lessons** with keyword search
+- **Utility Functions:**
+  - `searchKnowledgeBase(query)` - Full-text search with relevance ranking
+  - `getConceptByTerm(term)` - Direct concept lookup
+  - `getRelatedConcepts(conceptId)` - Find connected topics
+  - `getFAQsByCategory(category)` - Categorized FAQ retrieval
+  - `getLearningPath(conceptId)` - Get prerequisites and learning sequence
+  - `getContextualSuggestions(courseId, moduleId, lessonId)` - AI-driven recommendations
+
+```typescript
+// Example: Search and retrieve related content
+const results = searchKnowledgeBase('useState');
+const concept = getConceptByTerm('useState');
+const path = getLearningPath(concept.id);
+```
+
+#### 2. RAG (Retrieval Augmented Generation) Engine
+**File:** `src/utils/ragService.ts` (574 lines)
+
+Intelligent content retrieval with ranking and augmentation:
+
+**Core Retrieval Functions:**
+- `retrieveRelevantContent(query, metadata, maxSources)` - Multi-source search with difficulty filtering
+- `retrieveContextualContent(courseId, moduleId, lessonId)` - Lesson-specific content retrieval
+- `retrieveFAQContent(category)` - FAQ-based retrieval with helpfulness ranking
+- `retrieveTermExplanation(term)` - Definition + examples + related concepts
+
+**Advanced Processing:**
+- `deduplicateSources()` - Remove duplicate content keeping highest relevance
+- `combineSources()` - Format sources into structured markdown (Definitions → Concepts → FAQs → Lessons)
+- `calculateCombinedRelevance()` - Weighted scoring across source types
+- `createEnhancedPrompt(query, metadata)` - Main RAG function combining all sources
+- `enhanceResponseWithCitations(response, sources)` - Append formatted citations with icons
+
+**Source Ranking System:**
+```
+Definition: 1.0 (highest)
+Concept: 0.9
+Lesson: 0.85
+FAQ: 0.8 (lowest)
+```
+
+**Difficulty Adaptation:**
+- 0-30% progress → Beginner + Intermediate content
+- 30-70% progress → Intermediate + Advanced content
+- 70-100% progress → Advanced + Expert content
+
+#### 3. Context-Aware Prompt Builder
+**File:** `src/utils/promptBuilder.ts` (~400 lines)
+
+Intelligent prompt construction with intent detection:
+
+**Intent Detection:**
+- `detectExplanationRequest()` - Identify concept explanation requests
+- `detectFAQRequest()` - Recognize FAQ-style questions
+- `extractCategoryFromQuery()` - Auto-categorize user queries
+
+**Specialized Prompt Builders:**
+- `buildSystemPrompt(metadata)` - Role and context setup
+- `buildExplanationPrompt(highlightedText, context, metadata)` - Text-based explanations
+- `buildLessonPrompt(lessonId, courseId, query)` - Lesson-specific questions
+- `buildFAQPrompt(category, query)` - FAQ-targeted responses
+- `buildTaskPrompt(taskId, courseId, query)` - Assignment help (guidance without solutions)
+- `buildContextAwarePrompt(query, metadata)` - Auto-routes to appropriate builder
+
+**System Prompts:**
+- **Learning:** General educational queries
+- **Explanation:** Deep dives into concepts
+- **Technical:** Advanced implementation details
+- **Help:** Platform navigation and support
+
+#### 4. AIChatbot Integration
+**File:** `src/components/features/AIChatbot.tsx` (Updated)
+
+RAG features integrated into chatbot:
+- Uses `buildContextAwarePrompt()` for intelligent routing
+- Injects retrieved sources into responses
+- Automatic citation generation with source type icons:
+  - 📖 Definition
+  - 💡 Concept
+  - ❓ FAQ
+  - 📚 Lesson
+- Source suggestions displayed below responses
+- Regenerate button uses fresh RAG context
+- Text highlight explanations use `buildExplanationPrompt()`
+
+**Example Response with Citations:**
+```
+[Bot Response Content]
+
+---
+**Sources:**
+📖 Definition: React Component
+💡 Concept: Functional Components
+📚 Lesson: Building Your First Component
+```
+
+#### 5. Documentation
+**File:** `RAG_SYSTEM.md`
+
+Complete documentation including:
+- Architecture overview with diagrams
+- Retrieval pipeline walkthrough
+- Source ranking algorithm explanation
+- Citation format specifications
+- Performance metrics and optimization
+- Usage examples for all core functions
+
+### 🎉 Try RAG Features!
+
+1. **Text Highlighting:** Highlight any text and click "Explain" for concept clarification
+2. **Knowledge Search:** Ask "What is useState?" or "How do hooks work?"
+3. **Contextual Help:** Navigate to a lesson and ask related questions
+4. **FAQ Retrieval:** Ask "Why is my component re-rendering?"
+5. **Source Citations:** Look for source icons in responses
+
+---
+
+### 🎉 Try It Now! (Text Highlight)
 
 1. Checkout `text-highlight` branch
 2. Run `npm run dev`
 3. Navigate to any course → Open a lesson
 4. Highlight any text (e.g., "React", "component")
 5. Click "Explain" button
-6. Watch AI explain the concept!
+6. Watch AI explain the concept with RAG-enhanced sources!
 
 ---
 

@@ -15,6 +15,8 @@ import {
   Download,
   Pencil,
   Check,
+  BookMarked,
+  Link2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +26,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css';
+import {
+  buildExplanationPrompt,
+  buildGeneralPrompt,
+  buildContextAwarePrompt,
+  formatPromptForLogging,
+} from '@/utils/promptBuilder';
+import { enhanceResponseWithCitations } from '@/utils/ragService';
 
 export interface AIChatbotRef {
   explainText: (text: string, context?: string, metadata?: Partial<ChatMessageMetadata>) => void;
@@ -77,6 +86,7 @@ interface ChatState {
   editingMessageId?: string;
   editingContent: string;
   searchQuery: string;
+  sourceSuggestions: Array<{ id: string; title: string; type: string }>;
 }
 
 type ChatAction =
@@ -91,7 +101,8 @@ type ChatAction =
   | { type: 'cancelEdit' }
   | { type: 'setEditingContent'; value: string }
   | { type: 'setSearchQuery'; value: string }
-  | { type: 'clearMessages' };
+  | { type: 'clearMessages' }
+  | { type: 'setSources'; sources: Array<{ id: string; title: string; type: string }> };
 
 const initialState: ChatState = {
   isOpen: false,
@@ -102,6 +113,7 @@ const initialState: ChatState = {
   editingMessageId: undefined,
   editingContent: '',
   searchQuery: '',
+  sourceSuggestions: [],
 };
 
 const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
@@ -133,6 +145,8 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
       return { ...state, editingContent: action.value };
     case 'setSearchQuery':
       return { ...state, searchQuery: action.value };
+    case 'setSources':
+      return { ...state, sourceSuggestions: action.sources };
     case 'clearMessages':
       return {
         ...state,
@@ -140,6 +154,7 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         lastHighlight: undefined,
         editingMessageId: undefined,
         editingContent: '',
+        sourceSuggestions: [],
       };
     default:
       return state;
@@ -195,15 +210,19 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
       });
 
       setTimeout(() => {
+        const prompt = buildExplanationPrompt(text, context, highlightMetadata);
+        let response = `Great question! Let me explain "${text}".\n\nQUICK OVERVIEW:\nThis is important to your learning journey.\n\nDETAILED EXPLANATION:\nUnderstanding "${text}" will help you progress.\n\nKEY TAKEAWAY:\n- Fundamental concept\n- Practice with materials\n- Apply in assignments\n\nWant me to elaborate?`;
+        response = enhanceResponseWithCitations(response, prompt.citations);
         const botMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
-          content: generateExplanation(text, context),
+          content: response,
           sender: 'bot',
           timestamp: new Date().toISOString(),
           contextType: 'explanation',
           metadata: highlightMetadata,
         };
         dispatch({ type: 'addMessage', message: botMessage });
+        dispatch({ type: 'setSources', sources: prompt.citations.map((c) => ({ id: c.sourceId, title: c.sourceTitle, type: c.sourceType })) });
         dispatch({ type: 'setTyping', value: false });
       }, 1000);
     },
@@ -212,21 +231,18 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
     },
   }));
 
-  const getBotResponse = (message: string): string => {
-    const lowerMessage = message.toLowerCase();
-    if (lowerMessage.includes('react') || lowerMessage.includes('component')) {
-      return botResponses.react;
+  const getBotResponse = (message: string, metadata?: Partial<ChatMessageMetadata>): { content: string; sources: string[] } => {
+    const prompt = buildContextAwarePrompt(message, metadata);
+    let response = '';
+    if (message.toLowerCase().includes('react') || message.toLowerCase().includes('component')) {
+      response = 'React is a JavaScript library for building UIs. Ask about components, props, or hooks?';
+    } else if (message.toLowerCase().includes('deadline')) {
+      response = 'Upcoming deadlines:\n• React Todo App - Feb 15\n• Data Dashboard - Feb 20';
+    } else {
+      response = 'I am here to help! Ask about courses or technical questions.';
     }
-    if (lowerMessage.includes('deadline') || lowerMessage.includes('due')) {
-      return botResponses.deadline;
-    }
-    if (lowerMessage.includes('submit') || lowerMessage.includes('github')) {
-      return botResponses.submit;
-    }
-    if (lowerMessage.includes('help') || lowerMessage.includes('what can')) {
-      return botResponses.help;
-    }
-    return botResponses.default;
+    response = enhanceResponseWithCitations(response, prompt.citations);
+    return { content: response, sources: prompt.citations.map((c) => c.sourceId) };
   };
 
   const handleSend = () => {
@@ -244,15 +260,18 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
     dispatch({ type: 'setInput', value: '' });
     dispatch({ type: 'setTyping', value: true });
 
+    const userInput = state.input;
     setTimeout(() => {
+      const { content, sources } = getBotResponse(userInput, state.lastHighlight);
       const botMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: getBotResponse(state.input),
+        content,
         sender: 'bot',
         timestamp: new Date().toISOString(),
         contextType: 'general',
       };
       dispatch({ type: 'addMessage', message: botMessage });
+      dispatch({ type: 'setSources', sources: sources.map((s) => ({ id: s, title: s, type: 'reference' })) });
       dispatch({ type: 'setTyping', value: false });
     }, 1000);
   };
@@ -299,22 +318,34 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
     dispatch({ type: 'setTyping', value: true });
 
     setTimeout(() => {
-      const regeneratedContent = lastUserMessage.metadata?.highlightedText
-        ? generateExplanation(
-            lastUserMessage.metadata.highlightedText,
-            lastUserMessage.metadata.textContext
-          )
-        : getBotResponse(lastUserMessage.content);
+      let regeneratedData: { content: string; sources: string[] };
+      
+      if (lastUserMessage.metadata?.highlightedText) {
+        const prompt = buildExplanationPrompt(
+          lastUserMessage.metadata.highlightedText,
+          lastUserMessage.metadata.textContext,
+          lastUserMessage.metadata
+        );
+        let response = `Great! Let me re-explain "${lastUserMessage.metadata.highlightedText}".\n\nHere is more detail on this concept.\n\nNeed clarification?`;
+        response = enhanceResponseWithCitations(response, prompt.citations);
+        regeneratedData = { content: response, sources: prompt.citations.map((c) => c.sourceId) };
+      } else {
+        regeneratedData = getBotResponse(lastUserMessage.content, lastUserMessage.metadata);
+      }
 
       const botMessage: ChatMessage = {
         id: Date.now().toString(),
-        content: regeneratedContent,
+        content: regeneratedData.content,
         sender: 'bot',
         timestamp: new Date().toISOString(),
         contextType: lastUserMessage.contextType,
         metadata: lastUserMessage.metadata,
       };
       dispatch({ type: 'addMessage', message: botMessage });
+      dispatch({
+        type: 'setSources',
+        sources: regeneratedData.sources.map((s) => ({ id: s, title: s, type: 'reference' })),
+      });
       dispatch({ type: 'setTyping', value: false });
     }, 1000);
   };
