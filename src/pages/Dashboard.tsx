@@ -6,6 +6,7 @@ import { courses, tasks, announcements } from '@/data/mockData';
 import ProgressCard from '@/components/features/ProgressCard';
 import AnnouncementCard from '@/components/features/AnnouncementCard';
 import TaskCard from '@/components/features/TaskCard';
+import LearningRecommendations from '@/components/features/LearningRecommendations';
 import { Button } from '@/components/ui/button';
 
 const Dashboard: React.FC = () => {
@@ -58,30 +59,35 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Course Progress */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Your Courses</h2>
-            <Link
-              to="/courses"
-              className="text-sm text-primary hover:underline flex items-center gap-1"
-            >
-              View all <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {courses.map((course) => (
-              <ProgressCard
-                key={course.id}
-                title={course.title}
-                progress={course.progress}
-                subtitle={`${course.instructor} • ${course.duration}`}
-              />
-            ))}
+        {/* Course Progress & Recommendations */}
+        <div className="lg:col-span-2 space-y-6">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Your Courses</h2>
+              <Link
+                to="/courses"
+                className="text-sm text-primary hover:underline flex items-center gap-1"
+              >
+                View all <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {courses.map((course) => (
+                <ProgressCard
+                  key={course.id}
+                  title={course.title}
+                  progress={course.progress}
+                  subtitle={`${course.instructor} • ${course.duration}`}
+                />
+              ))}
+            </div>
           </div>
 
+          {/* Personalized Learning Recommendations */}
+          <LearningRecommendations />
+
           {/* Pending Tasks */}
-          <div className="mt-6">
+          <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Pending Tasks</h2>
               <Link
