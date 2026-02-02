@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
+import { knowledgeBase } from '../data/knowledgeBase.js';
 
 dotenv.config();
 
@@ -14,15 +15,65 @@ interface ChatMessage {
 
 class GeminiService {
   /**
-   * Generate AI response with conversation history
+   * Find relevant knowledge from knowledge base
+   */
+  private findRelevantKnowledge(query: string): string {
+    const queryLower = query.toLowerCase();
+    let context = '';
+
+    // Search concepts
+    const relevantConcepts = knowledgeBase.concepts.filter(concept =>
+      queryLower.includes(concept.title.toLowerCase()) ||
+      concept.explanation.toLowerCase().includes(queryLower) ||
+      queryLower.split(' ').some(word => 
+        word.length > 3 && concept.title.toLowerCase().includes(word)
+      )
+    );
+
+    // Search FAQs
+    const relevantFAQs = knowledgeBase.faqs.filter(faq =>
+      queryLower.includes(faq.question.toLowerCase()) ||
+      faq.question.toLowerCase().includes(queryLower)
+    );
+
+    // Add concepts to context
+    if (relevantConcepts.length > 0) {
+      context += '\n📚 Knowledge Base - Concepts:\n';
+      relevantConcepts.slice(0, 2).forEach(concept => {
+        context += `• ${concept.title}: ${concept.explanation}\n`;
+      });
+    }
+
+    // Add FAQs to context
+    if (relevantFAQs.length > 0) {
+      context += '\n❓ Knowledge Base - FAQs:\n';
+      relevantFAQs.slice(0, 2).forEach(faq => {
+        context += `Q: ${faq.question}\nA: ${faq.answer}\n`;
+      });
+    }
+
+    return context;
+  }
+
+  /**
+   * Generate AI response with conversation history and knowledge base
    */
   async generateResponse(
     userMessage: string,
     conversationHistory: ChatMessage[] = []
   ): Promise<string> {
     try {
+      // Find relevant knowledge from knowledge base
+      const knowledgeContext = this.findRelevantKnowledge(userMessage);
+      
       // Build prompt with context
       let prompt = 'You are a helpful LMS learning assistant.\n\n';
+      
+      // Add knowledge base context if found
+      if (knowledgeContext) {
+        prompt += knowledgeContext + '\n';
+        prompt += 'Use the above knowledge base information to provide accurate, detailed responses.\n\n';
+      }
       
       // Add recent conversation (last 3 messages for context)
       if (conversationHistory.length > 0) {
@@ -34,7 +85,7 @@ class GeminiService {
       }
       
       prompt += `Student question: ${userMessage}\n\n`;
-      prompt += 'Provide a clear, educational response.';
+      prompt += 'Provide a clear, educational response. If you used the knowledge base, mention relevant concepts naturally in your explanation.';
 
       // Call Gemini API
       const result = await model.generateContent(prompt);
