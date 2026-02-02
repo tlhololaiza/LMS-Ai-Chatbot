@@ -17,6 +17,7 @@ import {
   Check,
   BookMarked,
   Link2,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ import {
   formatPromptForLogging,
 } from '@/utils/promptBuilder';
 import { enhanceResponseWithCitations } from '@/utils/ragService';
+import { sendMessage, APIError } from '@/services/apiClient';
 
 // Frontend logQuery: send to backend API
 function logQuery(query: string, category: string) {
@@ -220,43 +222,137 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
         },
       });
 
-      setTimeout(() => {
-        const prompt = buildExplanationPrompt(text, context, highlightMetadata);
-        let response = `Great question! Let me explain "${text}".\n\nQUICK OVERVIEW:\nThis is important to your learning journey.\n\nDETAILED EXPLANATION:\nUnderstanding "${text}" will help you progress.\n\nKEY TAKEAWAY:\n- Fundamental concept\n- Practice with materials\n- Apply in assignments\n\nWant me to elaborate?`;
-        response = enhanceResponseWithCitations(response, prompt.citations);
-        const botMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          content: response,
-          sender: 'bot',
-          timestamp: new Date().toISOString(),
-          contextType: 'explanation',
-          metadata: highlightMetadata,
-        };
-        dispatch({ type: 'addMessage', message: botMessage });
-        dispatch({ type: 'setSources', sources: prompt.citations.map((c) => ({ id: c.sourceId, title: c.sourceTitle, type: c.sourceType })) });
-        dispatch({ type: 'setTyping', value: false });
-      }, 1000);
+      // Call API for explanation
+      (async () => {
+        try {
+          // Convert existing messages to conversation history
+          const conversationHistory = state.messages
+            .filter(msg => msg.sender === 'user' || msg.sender === 'bot')
+            .map(msg => ({
+              role: msg.sender === 'user' ? 'user' as const : 'assistant' as const,
+              content: msg.content,
+            }));
+
+          // Send to API with explanation context
+          const apiResponse = await sendMessage({
+            message: `Please explain: "${text}"`,
+            conversationHistory,
+            metadata: {
+              highlightedText: text,
+              textContext: context,
+              source: highlightMetadata.source,
+              lessonId: highlightMetadata.lessonId,
+              moduleId: highlightMetadata.moduleId,
+              courseId: highlightMetadata.courseId,
+            },
+          });
+
+          // Enhance with local citations
+          const prompt = buildExplanationPrompt(text, context, highlightMetadata);
+          const response = enhanceResponseWithCitations(apiResponse.response, prompt.citations);
+          
+          const botMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            content: response,
+            sender: 'bot',
+            timestamp: new Date().toISOString(),
+            contextType: 'explanation',
+            metadata: highlightMetadata,
+          };
+          dispatch({ type: 'addMessage', message: botMessage });
+          dispatch({ type: 'setSources', sources: prompt.citations.map((c) => ({ id: c.sourceId, title: c.sourceTitle, type: c.sourceType })) });
+        } catch (error) {
+          console.error('Explanation API Error:', error);
+          // Fallback error message
+          const errorMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            content: `⚠️ Sorry, I couldn't generate an explanation for "${text}". Please try again or rephrase your question.`,
+            sender: 'bot',
+            timestamp: new Date().toISOString(),
+            contextType: 'explanation',
+            metadata: highlightMetadata,
+          };
+          dispatch({ type: 'addMessage', message: errorMessage });
+        } finally {
+          dispatch({ type: 'setTyping', value: false });
+        }
+      })();
     },
     openChat: () => {
       dispatch({ type: 'open' });
     },
   }));
 
-  const getBotResponse = (message: string, metadata?: Partial<ChatMessageMetadata>): { content: string; sources: string[] } => {
-    const prompt = buildContextAwarePrompt(message, metadata);
-    let response = '';
-    if (message.toLowerCase().includes('react') || message.toLowerCase().includes('component')) {
-      response = 'React is a JavaScript library for building UIs. Ask about components, props, or hooks?';
-    } else if (message.toLowerCase().includes('deadline')) {
-      response = 'Upcoming deadlines:\n• React Todo App - Feb 15\n• Data Dashboard - Feb 20';
-    } else {
-      response = 'I am here to help! Ask about courses or technical questions.';
+  /**
+   * Get bot response from backend API
+   * Converts chat history to API format and handles errors gracefully
+   */
+  const getBotResponse = async (
+    message: string,
+    metadata?: Partial<ChatMessageMetadata>
+  ): Promise<{ content: string; sources: string[] }> => {
+    try {
+      // Convert message history to API format (role + content)
+      const conversationHistory = state.messages
+        .filter(msg => msg.sender === 'user' || msg.sender === 'bot')
+        .map(msg => ({
+          role: msg.sender === 'user' ? 'user' as const : 'assistant' as const,
+          content: msg.content,
+        }));
+
+      // Prepare metadata for API
+      const apiMetadata = metadata ? {
+        courseId: metadata.courseId,
+        moduleId: metadata.moduleId,
+        lessonId: metadata.lessonId,
+        highlightedText: metadata.highlightedText,
+        textContext: metadata.textContext,
+        source: metadata.source,
+      } : undefined;
+
+      // Send message to backend API
+      const response = await sendMessage({
+        message,
+        conversationHistory,
+        metadata: apiMetadata,
+      });
+
+      // Get prompt context for citations (still using local RAG)
+      const prompt = buildContextAwarePrompt(message, metadata);
+      const enhancedResponse = enhanceResponseWithCitations(response.response, prompt.citations);
+
+      return {
+        content: enhancedResponse,
+        sources: prompt.citations.map((c) => c.sourceId),
+      };
+    } catch (error) {
+      // Graceful error handling with fallback message
+      console.error('API Error:', error);
+      
+      let errorMessage = 'Sorry, I encountered an error processing your request. Please try again.';
+      
+      if (error instanceof APIError) {
+        if (error.statusCode === 429) {
+          errorMessage = '⏳ I\'m getting too many requests right now. Please wait a moment and try again.';
+        } else if (error.statusCode === 500) {
+          errorMessage = '⚠️ The AI service is temporarily unavailable. Please try again in a moment.';
+        } else if (error.statusCode === 400) {
+          errorMessage = '❌ There was an issue with your request. Could you rephrase your question?';
+        } else {
+          errorMessage = `⚠️ Error: ${error.message}`;
+        }
+      } else if (error instanceof Error && error.message.includes('fetch')) {
+        errorMessage = '🔌 Unable to connect to the AI service. Please check your connection and try again.';
+      }
+
+      return {
+        content: errorMessage,
+        sources: [],
+      };
     }
-    response = enhanceResponseWithCitations(response, prompt.citations);
-    return { content: response, sources: prompt.citations.map((c) => c.sourceId) };
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!state.input.trim()) return;
 
   // Log the query text and category (general)
@@ -275,8 +371,10 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
     dispatch({ type: 'setTyping', value: true });
 
     const userInput = state.input;
-    setTimeout(() => {
-      const { content, sources } = getBotResponse(userInput, state.lastHighlight);
+    
+    try {
+      // Call real API
+      const { content, sources } = await getBotResponse(userInput, state.lastHighlight);
       const botMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         content,
@@ -286,8 +384,19 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
       };
       dispatch({ type: 'addMessage', message: botMessage });
       dispatch({ type: 'setSources', sources: sources.map((s) => ({ id: s, title: s, type: 'reference' })) });
+    } catch (error) {
+      // Error is already handled in getBotResponse, but add fallback
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        content: '⚠️ Sorry, something went wrong. Please try again.',
+        sender: 'bot',
+        timestamp: new Date().toISOString(),
+        contextType: 'general',
+      };
+      dispatch({ type: 'addMessage', message: errorMessage });
+    } finally {
       dispatch({ type: 'setTyping', value: false });
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -325,26 +434,48 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
     URL.revokeObjectURL(url);
   };
 
-  const handleRegenerate = () => {
+  const handleRegenerate = async () => {
     const lastUserMessage = [...state.messages].reverse().find((message) => message.sender === 'user');
     if (!lastUserMessage) return;
 
     dispatch({ type: 'setTyping', value: true });
 
-    setTimeout(() => {
+    try {
       let regeneratedData: { content: string; sources: string[] };
       
       if (lastUserMessage.metadata?.highlightedText) {
+        // For highlighted text explanations, regenerate with API
+        const conversationHistory = state.messages
+          .filter(msg => msg.sender === 'user' || msg.sender === 'bot')
+          .slice(0, -1) // Exclude last bot response to regenerate it
+          .map(msg => ({
+            role: msg.sender === 'user' ? 'user' as const : 'assistant' as const,
+            content: msg.content,
+          }));
+
+        const apiResponse = await sendMessage({
+          message: `Please explain: "${lastUserMessage.metadata.highlightedText}"`,
+          conversationHistory,
+          metadata: {
+            highlightedText: lastUserMessage.metadata.highlightedText,
+            textContext: lastUserMessage.metadata.textContext,
+            source: lastUserMessage.metadata.source,
+            lessonId: lastUserMessage.metadata.lessonId,
+            moduleId: lastUserMessage.metadata.moduleId,
+            courseId: lastUserMessage.metadata.courseId,
+          },
+        });
+
         const prompt = buildExplanationPrompt(
           lastUserMessage.metadata.highlightedText,
           lastUserMessage.metadata.textContext,
           lastUserMessage.metadata
         );
-        let response = `Great! Let me re-explain "${lastUserMessage.metadata.highlightedText}".\n\nHere is more detail on this concept.\n\nNeed clarification?`;
-        response = enhanceResponseWithCitations(response, prompt.citations);
+        const response = enhanceResponseWithCitations(apiResponse.response, prompt.citations);
         regeneratedData = { content: response, sources: prompt.citations.map((c) => c.sourceId) };
       } else {
-        regeneratedData = getBotResponse(lastUserMessage.content, lastUserMessage.metadata);
+        // For general messages
+        regeneratedData = await getBotResponse(lastUserMessage.content, lastUserMessage.metadata);
       }
 
       const botMessage: ChatMessage = {
@@ -360,8 +491,20 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
         type: 'setSources',
         sources: regeneratedData.sources.map((s) => ({ id: s, title: s, type: 'reference' })),
       });
+    } catch (error) {
+      console.error('Regenerate API Error:', error);
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        content: '⚠️ Sorry, I couldn\'t regenerate the response. Please try asking again.',
+        sender: 'bot',
+        timestamp: new Date().toISOString(),
+        contextType: lastUserMessage.contextType,
+        metadata: lastUserMessage.metadata,
+      };
+      dispatch({ type: 'addMessage', message: errorMessage });
+    } finally {
       dispatch({ type: 'setTyping', value: false });
-    }, 1000);
+    }
   };
 
   const handleStartEdit = (message: ChatMessage) => {
