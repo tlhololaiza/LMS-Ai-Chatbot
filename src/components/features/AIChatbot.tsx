@@ -34,6 +34,15 @@ import {
 } from '@/utils/promptBuilder';
 import { enhanceResponseWithCitations } from '@/utils/ragService';
 
+// Frontend logQuery: send to backend API
+function logQuery(query: string, category: string) {
+  fetch('http://localhost:4000/api/log-query', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, category }),
+  }).catch(() => {/* ignore errors for now */});
+}
+
 export interface AIChatbotRef {
   explainText: (text: string, context?: string, metadata?: Partial<ChatMessageMetadata>) => void;
   openChat: () => void;
@@ -175,6 +184,8 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
 
   useImperativeHandle(ref, () => ({
     explainText: (text: string, context?: string, metadata?: Partial<ChatMessageMetadata>) => {
+  // Log the query text and category (always 'explanation' here)
+  logQuery(text, 'explanation');
       dispatch({ type: 'open' });
 
       const highlightMetadata: ChatMessageMetadata = {
@@ -247,6 +258,9 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
 
   const handleSend = () => {
     if (!state.input.trim()) return;
+
+  // Log the query text and category (general)
+  logQuery(state.input, 'general');
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
