@@ -182,17 +182,13 @@ npm run dev
 
 **Testing:**
 ```bash
-# RuBackend & AI
-- **Express 5.2.1** - Backend server
-- **Google Generative AI 0.24.1** - Gemini AI integration
-- **CORS 2.8.6** - Cross-origin resource sharing
-- **dotenv 17.2.3** - Environment configuration
+# Run API client tests (requires backend running)
+npm run test:api-client
 
-### Development Tools
-- **ESLint 9.32.0** - Code linting
-- **Vitest 3.2.4** - Unit testing
-- **@testing-library/react 16.0.0** - Component testing
-- **tsx 4.21.0** - TypeScript execution
+# Quick setup verification
+npm run verify:setup
+
+# See the full testing guide
 cat API_CLIENT_TESTING.md
 ```
 
@@ -362,23 +358,33 @@ npm run verify:setup     # Verify API client setup
   - APIError class for typed error handling
   - HTTP status validation and network error handling
   - Helper functions for conversation history formatting
-  
-- [x] Task 3.2: Backend Chat Endpoints
+
+- [x] Task 3.2: Update AIChatbot Component
+  - `src/components/features/AIChatbot.tsx`
+  - Replace mock `getBotResponse()` with real API calls
+  - Convert message history to API format (role + content)
+  - Graceful API error handling with fallback messages
+  - Async handlers for `handleSend()`, `explainText()`, `handleRegenerate()`
+
+- [x] Task 3.3: Backend Chat Endpoints
   - `server/index.ts` - Updated with chat endpoints
   - `GET /api/health` - Health check endpoint
   - `POST /api/chat` - Main chat endpoint (non-streaming)
   - `POST /api/chat/stream` - Streaming chat with Server-Sent Events
   - Integration with GeminiService for AI responses
-  
-- [x] Task 3.3: Testing & Documentation
+
+- [x] Task 3.4: Testing & Documentation
   - `src/services/apiClient.test.ts` - Unit tests with Vitest
   - `src/services/testApiClient.ts` - Integration test script
   - `API_CLIENT_TESTING.md` - Comprehensive testing guide
   - `API_CLIENT_SUMMARY.md` - Implementation documentation
+  - `TASK_3.2_TESTING_GUIDE.md` - AIChatbot integration tests
+  - `TASK_3.2_SUMMARY.md` - AIChatbot integration summary
   - Setup verification script
 
 **Commits:**
 1. `feat: implement frontend API client with streaming support`
+2. `feat(chatbot): integrate real API client with error handling`
 
 **🔗 View:** [feature/frontend-integration branch on GitHub](https://github.com/tlhololaiza/LMS-Ai-Chatbot/tree/feature/frontend-integration)
 
