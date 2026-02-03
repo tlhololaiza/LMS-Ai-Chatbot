@@ -530,11 +530,35 @@ server/
     ├── data/
     │   └── knowledgeBase.ts  ← 10 concepts + 10 FAQs
     └── services/
+## 🧩 Backend API (Tasks 2.1–2.3)
+
+The backend lives in `server/` and exposes chat endpoints powered by Google Gemini.
+
+### Setup
+- Create a `.env` file in `server/` (see `server/.env.example`):
+  - `GOOGLE_GEMINI_API_KEY=your_real_key`
+  - `PORT=4000`
+- Install server deps and start in watch mode:
+
+```powershell
         └── geminiService.ts  ← AI service with RAG
 ```
 
 **Key Features:**
 - ✅ Google Gemini Pro model integration
+
+You should see: `Chat API server running on port 4000`.
+
+### Endpoints
+
+1) Health check
+- GET `/api/health`
+- Response: `{ ok: true, service: "chat-api", status: "healthy|degraded", model: "gemini-pro" }`
+
+2) Chat (non-streaming)
+- POST `/api/chat`
+- Body JSON:
+```json
 - ✅ Conversation memory (3-turn context window)
 - ✅ RAG-enhanced responses using knowledge base
 - ✅ Smart keyword matching for concepts
@@ -543,12 +567,57 @@ server/
 - ✅ Error handling with user-friendly messages
 - ✅ Streaming support for real-time responses
 - ✅ TypeScript type safety throughout
+- Response: `{ ok: true, data: { reply: "..." } }`
+
+3) Chat (streaming via SSE)
+- POST `/api/chat/stream`
+- Headers: `Accept: text/event-stream`, `Content-Type: application/json`
+- Body JSON: `{ "message": "Stream an explanation of React hooks" }`
+- Response stream:
+  - `event: open` then many `data: {"delta":"..."}` frames, then `event: end`.
+
+### Rate Limiting (Task 2.3)
+- Applied to: `POST /api/chat` and `POST /api/chat/stream`
+- Limits: 100 requests per IP per 15 minutes
+- Exceeding returns HTTP 429 with JSON: `{ ok: false, error: "Too many requests, please try again later.", code: "RATE_LIMITED" }`
+
+### Test the API
+
+Postman
+- Create environment variable: `baseUrl = http://localhost:4000`
+- Health:
+  - GET `{{baseUrl}}/api/health`
+- Chat (non-stream):
+  - POST `{{baseUrl}}/api/chat` with JSON body `{ "message": "Explain React components" }`
+- Chat (SSE stream):
+  - POST `{{baseUrl}}/api/chat/stream` with headers `Accept: text/event-stream`, body `{ "message": "..." }`
+  - Note: Postman may buffer SSE; you can also use `curl.exe -N` in PowerShell for live streaming.
+
+Rate limit test
+- Postman Runner: run the `POST /api/chat` request 110 times; after 100, responses should be HTTP 429.
+- PowerShell (quick check):
+
+```powershell
 
 **Example Usage:**
 ```typescript
 import geminiService from './src/services/geminiService.js';
 
 // Generate response with knowledge base
+
+If you see HTTP 429, the limiter is working.
+
+### Implementation details
+- `server/index.ts`
+  - CORS + JSON body parsing
+  - GET `/api/health`
+  - POST `/api/chat` with validation and `geminiService.generateResponse()`
+  - POST `/api/chat/stream` using SSE with `geminiService.streamResponse()`
+  - Rate limiter (`express-rate-limit`) applied to both chat routes (100 req / 15 min)
+- `server/src/services/geminiService.ts`
+  - Integrates with Google Gemini (text + stream)
+- Dev server auto-restarts on code changes via `tsx watch`
+
 const response = await geminiService.generateResponse(
   'What are React hooks?',
   conversationHistory

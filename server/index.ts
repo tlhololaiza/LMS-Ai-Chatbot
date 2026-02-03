@@ -2,12 +2,25 @@ import express from 'express';
 import cors from 'cors';
 import { logQuery } from './logger';
 import geminiService from './src/services/geminiService.js';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
+
+// ---------------------------------------------
+// Rate Limiter (Task 2.3)
+// 15-minute window, max 100 requests per IP
+// ---------------------------------------------
+const chatLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, error: 'Too many requests, please try again later.', code: 'RATE_LIMITED' },
+});
 
 // ---------------------------------------------
 // Health Check Endpoint
@@ -66,6 +79,7 @@ function isValidHistory(history: unknown): history is ChatHistoryMessage[] {
 
 app.post(
   '/api/chat',
+  chatLimiter,
   async (
     req: express.Request<unknown, unknown, ChatRequest>,
     res: express.Response<ChatSuccessResponse | ErrorResponse>
@@ -111,6 +125,7 @@ interface ChatStreamRequest {
 
 app.post(
   '/api/chat/stream',
+  chatLimiter,
   async (req: express.Request<unknown, unknown, ChatStreamRequest>, res: express.Response) => {
     // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
