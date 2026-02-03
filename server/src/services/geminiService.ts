@@ -126,4 +126,6 @@ class GeminiService {
   }
 }
 
+// Export both the class and a default instance
+export { GeminiService };
 export default new GeminiService();

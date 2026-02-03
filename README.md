@@ -131,12 +131,14 @@ npm run dev
 ### 🤖 AI Chatbot Features
 
 #### 💬 Conversational AI Assistant
-- Context-aware responses
+- **Google Gemini AI** powered responses
+- **Real-time streaming** for instant feedback
+- Context-aware responses with conversation history
 - Platform navigation help
 - Technical concept explanations
 - Deadline and task assistance
 
-#### ✨ Text Highlight Explanation *(NEW)*
+#### ✨ Text Highlight Explanation
 **Branch:** `text-highlight` ✅ **IMPLEMENTED**
 
 - **Select any text** in lessons, modules, or tasks
@@ -153,6 +155,42 @@ npm run dev
 3. Click or press Enter
 4. AI chatbot opens with detailed explanation
 5. Continue conversation if needed
+
+#### 🔌 API Integration
+**Branch:** `feature/frontend-integration` ✅ **IMPLEMENTED**
+
+- **Frontend API Client** (`src/services/apiClient.ts`)
+  - `sendMessage()` - Send chat messages with full context
+  - `streamMessage()` - Real-time streaming responses
+  - Conversation history management
+  - Error handling with APIError class
+  - Connection health checks
+  
+- **Backend Chat API** (`server/index.ts`)
+  - `GET /api/health` - Health check endpoint
+  - `POST /api/chat` - Standard chat responses
+  - `POST /api/chat/stream` - Server-Sent Events streaming
+  - Google Gemini AI integration
+  - Knowledge base retrieval (RAG)
+
+**Features:**
+- Streaming responses for better UX
+- Automatic retry on network errors
+- Request/response metadata tracking
+- Conversation context preservation
+- Independent testing suite
+
+**Testing:**
+```bash
+# Run API client tests (requires backend running)
+npm run test:api-client
+
+# Quick setup verification
+npm run verify:setup
+
+# See the full testing guide
+cat API_CLIENT_TESTING.md
+```
 
 ---
 
@@ -206,22 +244,43 @@ cd LMS-Ai-Chatbot
 # 2. Install dependencies
 npm install
 
-# 3. Start dev server
+# 3. Configure environment variables
+# Frontend: Create .env file
+echo "VITE_API_URL=http://localhost:4000" > .env
+
+# Backend: Configure server/.env
+cd server
+cp .env.example .env
+# Edit server/.env and add your Google Gemini API key
+# Get free key: https://makersuite.google.com/app/apikey
+
+# 4. Install server dependencies
+npm install
+cd ..
+
+# 5. Start backend server (in separate terminal)
+cd server
 npm run dev
 
-# 4. Open browser
-# http://localhost:5173
+# 6. Start frontend dev server (in another terminal)
+npm run dev
+
+# 7. Open browser
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:4000
 ```
 
 ### Available Scripts
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run lint         # Run ESLint
-npm run test         # Run tests
-npm run test:watch   # Run tests in watch mode
+npm run dev              # Start development server
+npm run build            # Build for production
+npm run preview          # Preview production build
+npm run lint             # Run ESLint
+npm run test             # Run tests
+npm run test:watch       # Run tests in watch mode
+npm run test:api-client  # Test API client integration (requires server)
+npm run verify:setup     # Verify API client setup
 ```
 
 ---
@@ -288,13 +347,46 @@ npm run test:watch   # Run tests in watch mode
 
 **🔗 View:** [feature/chatbot-context-system branch on GitHub](https://github.com/tlhololaiza/LMS-Ai-Chatbot/tree/feature/chatbot-context-system)
 
-#### 📋 Phase 3: AI Backend Integration (PLANNED)
-**Branch:** `feature/ai-backend-integration`
+#### ✅ Phase 3: Frontend API Integration (COMPLETE)
+**Branch:** `feature/frontend-integration`
 
-**Tasks:**
-- [ ] Task 3.1: Setup AI Service Configuration
-- [ ] Task 3.2: Create AI API Client
-- [ ] Task 3.3: Response Processing & Formatting
+**Tasks Completed:**
+- [x] Task 3.1: Create API Client Service
+  - `src/services/apiClient.ts`
+  - `sendMessage()` function with POST to `/api/chat`
+  - `streamMessage()` async generator for real-time streaming
+  - APIError class for typed error handling
+  - HTTP status validation and network error handling
+  - Helper functions for conversation history formatting
+
+- [x] Task 3.2: Update AIChatbot Component
+  - `src/components/features/AIChatbot.tsx`
+  - Replace mock `getBotResponse()` with real API calls
+  - Convert message history to API format (role + content)
+  - Graceful API error handling with fallback messages
+  - Async handlers for `handleSend()`, `explainText()`, `handleRegenerate()`
+
+- [x] Task 3.3: Backend Chat Endpoints
+  - `server/index.ts` - Updated with chat endpoints
+  - `GET /api/health` - Health check endpoint
+  - `POST /api/chat` - Main chat endpoint (non-streaming)
+  - `POST /api/chat/stream` - Streaming chat with Server-Sent Events
+  - Integration with GeminiService for AI responses
+
+- [x] Task 3.4: Testing & Documentation
+  - `src/services/apiClient.test.ts` - Unit tests with Vitest
+  - `src/services/testApiClient.ts` - Integration test script
+  - `API_CLIENT_TESTING.md` - Comprehensive testing guide
+  - `API_CLIENT_SUMMARY.md` - Implementation documentation
+  - `TASK_3.2_TESTING_GUIDE.md` - AIChatbot integration tests
+  - `TASK_3.2_SUMMARY.md` - AIChatbot integration summary
+  - Setup verification script
+
+**Commits:**
+1. `feat: implement frontend API client with streaming support`
+2. `feat(chatbot): integrate real API client with error handling`
+
+**🔗 View:** [feature/frontend-integration branch on GitHub](https://github.com/tlhololaiza/LMS-Ai-Chatbot/tree/feature/frontend-integration)
 
 #### 📋 Phase 4: Enhanced Chatbot UI (PLANNED)
 **Branch:** `feature/enhanced-chatbot-ui`
