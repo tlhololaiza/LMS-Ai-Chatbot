@@ -22,3 +22,25 @@ export function logQuery(query: string, category: string) {
   fs.mkdirSync(path.dirname(LOG_FILE_PATH), { recursive: true });
   fs.appendFileSync(LOG_FILE_PATH, line, 'utf8');
 }
+
+export interface ResponseOutcomeEntry {
+  timestamp: string;
+  queryId?: string;
+  category: string;
+  outcome: 'success' | 'failure';
+  responseTimeMs?: number;
+  model?: string;
+  error?: string;
+}
+
+const RESPONSE_LOG_FILE_PATH = path.resolve(__dirname, './response_logs.jsonl');
+
+export function logResponseOutcome(entry: Omit<ResponseOutcomeEntry, 'timestamp'>) {
+  const fullEntry: ResponseOutcomeEntry = {
+    timestamp: new Date().toISOString(),
+    ...entry,
+  };
+  const line = JSON.stringify(fullEntry) + '\n';
+  fs.mkdirSync(path.dirname(RESPONSE_LOG_FILE_PATH), { recursive: true });
+  fs.appendFileSync(RESPONSE_LOG_FILE_PATH, line, 'utf8');
+}

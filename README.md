@@ -963,6 +963,130 @@ git push origin feature/your-feature
 
 ---
 
+## 🧪 Backend Logging – Task 1 & Task 2 (Implemented)
+
+This project now includes a lightweight backend to log chatbot interactions for analytics and troubleshooting.
+
+### Task 1: Log query text and category
+
+- Endpoint: `POST http://localhost:4000/api/log-query`
+- Purpose: Records the raw user query and the category (e.g., `general`, `explanation`).
+- Payload example:
+
+```json
+{
+  "query": "What is a React component?",
+  "category": "general"
+}
+```
+
+- Persistence: Appends JSON Lines to `server/query_logs.jsonl`.
+
+### Task 2: Log response outcome
+
+- Endpoint: `POST http://localhost:4000/api/log-response`
+- Purpose: Records whether a chatbot reply succeeded or failed, plus optional metadata.
+- Fields:
+  - `category`: string (required) – e.g., `general` or `explanation`
+  - `outcome`: `"success" | "failure"` (required)
+  - `queryId`: string (optional)
+  - `responseTimeMs`: number (optional)
+  - `model`: string (optional)
+  - `error`: string (optional)
+
+- Payload example (success):
+
+```json
+{
+  "queryId": "123",
+  "category": "faq",
+  "outcome": "success",
+  "responseTimeMs": 250,
+  "model": "gpt-4o-mini"
+}
+```
+
+- Payload example (failure):
+
+```json
+{
+  "category": "general",
+  "outcome": "failure",
+  "error": "timeout contacting model provider"
+}
+```
+
+- Persistence: Appends JSON Lines to `server/response_logs.jsonl`.
+
+### How to run the backend (Windows PowerShell)
+
+```powershell
+# From the server folder
+cd S:\CodeTribe\FINAL_PROJECTS\Project\LMS-Ai-Chatbot\server
+
+# Start the server
+npm run dev
+```
+
+Expected output:
+
+```
+Logger server running on port 4000
+```
+
+### Test with Postman
+
+1. Start the server (see above).
+2. In Postman, set `Content-Type: application/json`.
+3. Send requests:
+   - `POST http://localhost:4000/api/log-query` with body `{ "query": "...", "category": "general" }`
+   - `POST http://localhost:4000/api/log-response` with a valid payload (see examples above)
+4. Verify logs:
+   - Queries: `server/query_logs.jsonl`
+   - Responses: `server/response_logs.jsonl`
+
+### Quick test via PowerShell (without Postman)
+
+```powershell
+# Query log
+Invoke-RestMethod -Method Post -Uri http://localhost:4000/api/log-query -ContentType 'application/json' -Body '{ "query":"What is React?", "category":"general" }'
+
+# Response outcome (success)
+Invoke-RestMethod -Method Post -Uri http://localhost:4000/api/log-response -ContentType 'application/json' -Body '{ "queryId":"123", "category":"faq", "outcome":"success", "responseTimeMs": 250, "model":"gpt-4o-mini" }'
+
+# Response outcome (failure)
+Invoke-RestMethod -Method Post -Uri http://localhost:4000/api/log-response -ContentType 'application/json' -Body '{ "category":"general", "outcome":"failure", "error":"timeout contacting model provider" }'
+```
+
+### Frontend wiring
+
+- The chatbot UI in `src/components/features/AIChatbot.tsx` sends logs to the backend:
+  - Calls `/api/log-query` when the user asks a question.
+  - Calls `/api/log-response` after the bot replies (measures `responseTimeMs`).
+
+### Automated tests (server)
+
+- Test runner: **Vitest**
+- HTTP testing: **Supertest**
+- Run from the server folder:
+
+```powershell
+cd S:\CodeTribe\FINAL_PROJECTS\Project\LMS-Ai-Chatbot\server
+npm test
+```
+
+- What’s covered:
+  - Valid `POST /api/log-response` returns `200 { success: true }`
+  - Invalid `outcome` returns `400 { error: ... }`
+  - Missing `category` returns `400 { error: ... }`
+
+### Status
+
+- Task 1: Log query text and category – **Completed**
+- Task 2: Log response outcome – **Completed**
+
+---
+
 ## 📄 License
 
 © 2026 CodeTribe Academy. All rights reserved.

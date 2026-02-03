@@ -43,6 +43,19 @@ function logQuery(query: string, category: string) {
   }).catch(() => {/* ignore errors for now */});
 }
 
+// Frontend logResponseOutcome: send success/failure + metadata to backend API
+function logResponseOutcome(
+  category: 'explanation' | 'general',
+  outcome: 'success' | 'failure',
+  options?: { queryId?: string; responseTimeMs?: number; model?: string; error?: string }
+) {
+  fetch('http://localhost:4000/api/log-response', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category, outcome, ...options }),
+  }).catch(() => {/* ignore errors for now */});
+}
+
 export interface AIChatbotRef {
   explainText: (text: string, context?: string, metadata?: Partial<ChatMessageMetadata>) => void;
   openChat: () => void;
@@ -186,6 +199,7 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
     explainText: (text: string, context?: string, metadata?: Partial<ChatMessageMetadata>) => {
   // Log the query text and category (always 'explanation' here)
   logQuery(text, 'explanation');
+      const startTs = performance.now();
       dispatch({ type: 'open' });
 
       const highlightMetadata: ChatMessageMetadata = {
@@ -235,6 +249,12 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
         dispatch({ type: 'addMessage', message: botMessage });
         dispatch({ type: 'setSources', sources: prompt.citations.map((c) => ({ id: c.sourceId, title: c.sourceTitle, type: c.sourceType })) });
         dispatch({ type: 'setTyping', value: false });
+
+        const endTs = performance.now();
+        logResponseOutcome('explanation', 'success', {
+          responseTimeMs: Math.round(endTs - startTs),
+          model: 'simulated-bot',
+        });
       }, 1000);
     },
     openChat: () => {
@@ -261,6 +281,7 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
 
   // Log the query text and category (general)
   logQuery(state.input, 'general');
+    const startTs = performance.now();
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -287,6 +308,12 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
       dispatch({ type: 'addMessage', message: botMessage });
       dispatch({ type: 'setSources', sources: sources.map((s) => ({ id: s, title: s, type: 'reference' })) });
       dispatch({ type: 'setTyping', value: false });
+
+      const endTs = performance.now();
+      logResponseOutcome('general', 'success', {
+        responseTimeMs: Math.round(endTs - startTs),
+        model: 'simulated-bot',
+      });
     }, 1000);
   };
 
@@ -361,6 +388,10 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
         sources: regeneratedData.sources.map((s) => ({ id: s, title: s, type: 'reference' })),
       });
       dispatch({ type: 'setTyping', value: false });
+
+      logResponseOutcome((lastUserMessage.contextType as 'explanation'|'general') ?? 'general', 'success', {
+        model: 'simulated-bot',
+      });
     }, 1000);
   };
 

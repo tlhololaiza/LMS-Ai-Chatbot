@@ -1,0 +1,2 @@
+{"timestamp":"2026-02-02T16:40:06.517Z","category":"general","outcome":"success","responseTimeMs":123,"model":"unit-test"}
+{"timestamp":"2026-02-02T17:35:25.118Z","queryId":"123","category":"faq","outcome":"success","responseTimeMs":250,"model":"gpt-4o-mini"}
