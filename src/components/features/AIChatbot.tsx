@@ -17,7 +17,6 @@ import {
   Check,
   BookMarked,
   Link2,
-  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -353,7 +352,7 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
   };
 
   const handleSend = async () => {
-    if (!state.input.trim()) return;
+    if (!state.input.trim() || state.isTyping) return;
 
   // Log the query text and category (general)
   logQuery(state.input, 'general');
@@ -765,6 +764,7 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
                 <Bot className="w-4 h-4 text-primary-foreground" />
               </div>
               <div className="bg-muted rounded-xl px-4 py-3">
+                <div className="text-xs text-muted-foreground mb-1">AI is typing...</div>
                 <div className="flex gap-1">
                   <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-pulse-subtle" />
                   <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-pulse-subtle [animation-delay:0.2s]" />
@@ -784,8 +784,9 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
               onKeyPress={handleKeyPress}
               placeholder="Ask me anything..."
               className="flex-1"
+              disabled={state.isTyping}
             />
-            <Button onClick={handleSend} disabled={!state.input.trim()}>
+            <Button onClick={handleSend} disabled={!state.input.trim() || state.isTyping}>
               <Send className="w-4 h-4" />
             </Button>
           </div>
