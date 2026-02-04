@@ -1,9 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import { logQuery } from './logger.js';
+import { logQuery, logResponseOutcome } from './logger.js';
 import { GeminiService } from './src/services/geminiService.js';
-import { logQuery } from './logger';
-import geminiService from './src/services/geminiService.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -11,6 +9,17 @@ const geminiService = new GeminiService();
 
 app.use(cors());
 app.use(express.json());
+
+// Helper to classify AI error-like responses
+function isAiErrorResponse(text: string): boolean {
+  const t = (text || '').toLowerCase();
+  return (
+    t.includes('sorry, i encountered an error') ||
+    t.includes('too many requests') ||
+    t.includes('failed to generate') ||
+    t.includes('error generating response')
+  );
+}
 
 // Health check endpoint
 app.get('/api/health', (req: express.Request, res: express.Response) => {
@@ -32,6 +41,18 @@ app.post('/api/chat', async (req: express.Request, res: express.Response) => {
     // Generate response
     const response = await geminiService.generateResponse(message, conversationHistory || []);
 
+    // Classify and log outcome
+    const aiError = isAiErrorResponse(response);
+    logResponseOutcome({
+      query: message,
+      category: metadata?.source || 'general',
+      outcome: aiError ? 'error' : 'success',
+      response: aiError ? undefined : response,
+      errorMessage: aiError ? response : undefined,
+      model: 'gemini-pro',
+      aiError,
+    });
+
     res.status(200).json({
       response,
       timestamp: new Date().toISOString(),
@@ -39,6 +60,14 @@ app.post('/api/chat', async (req: express.Request, res: express.Response) => {
     });
   } catch (error) {
     console.error('Chat API error:', error);
+    // Log response outcome (error)
+    logResponseOutcome({
+      query: req.body?.message || '',
+      category: req.body?.metadata?.source || 'general',
+      outcome: 'error',
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      model: 'gemini-pro',
+    });
     res.status(500).json({
       error: 'Failed to generate response',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -67,6 +96,18 @@ app.post('/api/chat/stream', async (req: express.Request, res: express.Response)
     // In a real implementation, you'd use Gemini's streaming API
     const response = await geminiService.generateResponse(message, conversationHistory || []);
 
+    // Classify and log outcome for streaming
+    const aiError = isAiErrorResponse(response);
+    logResponseOutcome({
+      query: message,
+      category: metadata?.source || 'general',
+      outcome: aiError ? 'error' : 'success',
+      response: aiError ? undefined : response,
+      errorMessage: aiError ? response : undefined,
+      model: 'gemini-pro',
+      aiError,
+    });
+
     // Simulate streaming by sending response in chunks
     const words = response.split(' ');
     const chunkSize = 5;
@@ -82,6 +123,14 @@ app.post('/api/chat/stream', async (req: express.Request, res: express.Response)
     res.end();
   } catch (error) {
     console.error('Streaming chat API error:', error);
+    // Log response outcome (error for streaming)
+    logResponseOutcome({
+      query: req.body?.message || '',
+      category: req.body?.metadata?.source || 'general',
+      outcome: 'error',
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      model: 'gemini-pro',
+    });
     res.status(500).json({
       error: 'Failed to generate response',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -163,9 +212,29 @@ app.post(
 
       const reply = await geminiService.generateResponse(message, history || []);
 
+      // Classify and log outcome for typed endpoint
+      const aiError = isAiErrorResponse(reply);
+      logResponseOutcome({
+        query: message,
+        category: 'general',
+        outcome: aiError ? 'error' : 'success',
+        response: aiError ? undefined : reply,
+        errorMessage: aiError ? reply : undefined,
+        model: 'gemini-pro',
+        aiError,
+      });
+
       return res.status(200).json({ ok: true, data: { reply } });
     } catch (err) {
       console.error('POST /api/chat error:', err);
+      logResponseOutcome({
+        query: req.body?.message || '',
+        category: 'general',
+        outcome: 'error',
+        errorMessage: err instanceof Error ? err.message : 'Internal server error',
+        model: 'gemini-pro',
+        aiError: true,
+      });
       return res.status(500).json({ ok: false, error: 'Internal server error', code: 'INTERNAL_ERROR' });
     }
   }
