@@ -6,3 +6,9 @@
 {"timestamp":"2026-02-02T23:26:08.263Z","query":"JavaScript","category":"explanation"}
 {"timestamp":"2026-02-02T23:26:08.272Z","query":"Please explain: \"JavaScript\"","category":"lesson"}
 {"timestamp":"2026-02-03T02:01:13.029Z","query":"what is react ?","category":"general"}
+{"timestamp":"2026-02-04T13:08:15.387Z","query":"Hey My name is mosa","category":"general"}
+{"timestamp":"2026-02-04T13:08:15.392Z","query":"Hey My name is mosa","category":"general"}
+{"timestamp":"2026-02-04T13:08:16.830Z","event":"response_outcome","query":"Hey My name is mosa","category":"general","outcome":"success","responsePreview":"Sorry, I encountered an error. Please try again.","model":"gemini-pro"}
+{"timestamp":"2026-02-04T13:21:42.898Z","query":"Hi My name is mosa","category":"general"}
+{"timestamp":"2026-02-04T13:21:42.903Z","query":"Hi My name is mosa","category":"general"}
+{"timestamp":"2026-02-04T13:21:43.700Z","event":"response_outcome","query":"Hi My name is mosa","category":"general","outcome":"error","errorMessage":"Sorry, I encountered an error. Please try again.","model":"gemini-pro","aiError":true}
