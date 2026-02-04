@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { logQuery, logResponseOutcome, logEscalationEvent } from './logger.js';
+import { logQuery, logResponseOutcome, logEscalationEvent, verifyLogChain } from './logger.js';
 import { GeminiService } from './src/services/geminiService.js';
 
 const app = express();
@@ -271,6 +271,14 @@ app.post('/api/log-escalation', (req: express.Request, res: express.Response) =>
 
   logEscalationEvent({ query, category, reason, escalationType, target, severity, correlationId });
   return res.status(200).json({ ok: true });
+});
+
+// ---------------------------------------------
+// Verify Log Chain Endpoint
+// ---------------------------------------------
+app.get('/api/logs/verify', (_req: express.Request, res: express.Response) => {
+  const result = verifyLogChain();
+  res.status(200).json(result);
 });
 
 // ---------------------------------------------
