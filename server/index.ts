@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { logQuery, logResponseOutcome, logEscalationEvent, verifyLogChain } from './logger.js';
 import { GeminiService } from './src/services/geminiService.js';
 
@@ -7,8 +8,58 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const geminiService = new GeminiService();
 
+// Rate limiting configuration (30 requests per minute per IP)
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // 30 requests per minute
+  message: {
+    error: 'Too many requests',
+    message: 'Please wait a moment before sending more messages.',
+    retryAfter: 60,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Input validation middleware
+function validateChatInput(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const { message } = req.body;
+  
+  // Check if message exists and is a string
+  if (!message || typeof message !== 'string') {
+    return res.status(400).json({ 
+      error: 'Invalid input', 
+      message: 'Message is required and must be a string' 
+    });
+  }
+  
+  // Check message length (max 2000 characters)
+  if (message.length > 2000) {
+    return res.status(400).json({ 
+      error: 'Message too long', 
+      message: 'Message must be less than 2000 characters' 
+    });
+  }
+  
+  // Check for empty/whitespace-only messages
+  if (message.trim().length === 0) {
+    return res.status(400).json({ 
+      error: 'Empty message', 
+      message: 'Message cannot be empty' 
+    });
+  }
+  
+  // Sanitize message (basic XSS prevention)
+  req.body.message = message.trim();
+  
+  next();
+}
+
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10kb' })); // Limit body size
+
+// Apply rate limiting to chat endpoints
+app.use('/api/chat', apiLimiter);
 
 // Helper to classify AI error-like responses
 function isAiErrorResponse(text: string): boolean {
@@ -26,14 +77,10 @@ app.get('/api/health', (req: express.Request, res: express.Response) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Chat endpoint (non-streaming)
-app.post('/api/chat', async (req: express.Request, res: express.Response) => {
+// Chat endpoint (non-streaming) with validation
+app.post('/api/chat', validateChatInput, async (req: express.Request, res: express.Response) => {
   try {
     const { message, conversationHistory, metadata } = req.body;
-
-    if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Message is required and must be a string' });
-    }
 
     // Log the query
     logQuery(message, metadata?.source || 'general');
@@ -75,14 +122,10 @@ app.post('/api/chat', async (req: express.Request, res: express.Response) => {
   }
 });
 
-// Streaming chat endpoint
-app.post('/api/chat/stream', async (req: express.Request, res: express.Response) => {
+// Streaming chat endpoint with validation
+app.post('/api/chat/stream', validateChatInput, async (req: express.Request, res: express.Response) => {
   try {
     const { message, conversationHistory, metadata } = req.body;
-
-    if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Message is required and must be a string' });
-    }
 
     // Log the query
     logQuery(message, metadata?.source || 'general');

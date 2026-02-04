@@ -17,6 +17,7 @@ import {
   Check,
   BookMarked,
   Link2,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,7 @@ import {
 } from '@/utils/promptBuilder';
 import { enhanceResponseWithCitations } from '@/utils/ragService';
 import { sendMessage, APIError } from '@/services/apiClient';
+import { useToast } from '@/hooks/use-toast';
 
 // Frontend logQuery: send to backend API
 function logQuery(query: string, category: string) {
@@ -174,9 +176,24 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
 const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Show error toast with retry option
+  const showErrorToast = (message: string, onRetry?: () => void) => {
+    toast({
+      variant: 'destructive',
+      title: 'Error',
+      description: message,
+      action: onRetry ? (
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      ) : undefined,
+    });
   };
 
   useEffect(() => {
@@ -384,7 +401,17 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
       dispatch({ type: 'addMessage', message: botMessage });
       dispatch({ type: 'setSources', sources: sources.map((s) => ({ id: s, title: s, type: 'reference' })) });
     } catch (error) {
-      // Error is already handled in getBotResponse, but add fallback
+      // Show error toast with retry option
+      const errorMsg = error instanceof APIError 
+        ? error.message 
+        : 'Unable to connect to AI service';
+      
+      showErrorToast(errorMsg, () => {
+        dispatch({ type: 'setInput', value: userInput });
+        handleSend();
+      });
+      
+      // Add error message to chat
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         content: '⚠️ Sorry, something went wrong. Please try again.',
@@ -761,15 +788,18 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
           )}
           {state.isTyping && (
             <div className="flex gap-3 animate-fade-in">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary-foreground" />
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm">
+                <Bot className="w-4 h-4 text-primary-foreground animate-pulse" />
               </div>
-              <div className="bg-muted rounded-xl px-4 py-3">
-                <div className="text-xs text-muted-foreground mb-1">AI is typing...</div>
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-pulse-subtle" />
-                  <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-pulse-subtle [animation-delay:0.2s]" />
-                  <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-pulse-subtle [animation-delay:0.4s]" />
+              <div className="bg-muted/80 backdrop-blur-sm rounded-xl px-4 py-3 shadow-sm border border-border/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-3 h-3 text-primary animate-pulse" />
+                  <span className="text-xs font-medium text-muted-foreground">AI is thinking...</span>
+                </div>
+                <div className="flex gap-1.5">
+                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:0s]" />
+                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:0.15s]" />
+                  <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:0.3s]" />
                 </div>
               </div>
             </div>
