@@ -579,8 +579,9 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
         components={{
-          code({ inline, className, children, ...props }) {
-            return inline ? (
+          code({ className, children, ...props }) {
+            const isInline = !className?.includes('language-');
+            return isInline ? (
               <code
                 className={cn('rounded bg-muted/70 px-1.5 py-0.5 text-[0.8rem] font-mono', className)}
                 {...props}
