@@ -20,6 +20,18 @@ export interface ResponseOutcomeLogEntry {
   aiError?: boolean;
 }
 
+export interface EscalationLogEntry {
+  timestamp: string;
+  event: 'escalation';
+  query: string;
+  category: string;
+  reason: string; // e.g., low confidence, safety flag, user request
+  escalationType: 'human_review' | 'support' | 'moderation' | 'other';
+  target?: 'mentor' | 'admin' | 'support' | 'moderator' | string;
+  severity?: 'low' | 'medium' | 'high';
+  correlationId?: string;
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const LOG_FILE_PATH = path.resolve(__dirname, './query_logs.jsonl');
@@ -65,6 +77,38 @@ export function logResponseOutcome(params: {
     errorMessage,
     model,
     aiError,
+  };
+
+  const line = JSON.stringify(entry) + '\n';
+  fs.mkdirSync(path.dirname(LOG_FILE_PATH), { recursive: true });
+  fs.appendFileSync(LOG_FILE_PATH, line, 'utf8');
+}
+
+/**
+ * Log an escalation event for audit purposes.
+ * Useful when a conversation is handed off to a human or flagged for review.
+ */
+export function logEscalationEvent(params: {
+  query: string;
+  category: string;
+  reason: string;
+  escalationType: 'human_review' | 'support' | 'moderation' | 'other';
+  target?: 'mentor' | 'admin' | 'support' | 'moderator' | string;
+  severity?: 'low' | 'medium' | 'high';
+  correlationId?: string;
+}) {
+  const { query, category, reason, escalationType, target, severity, correlationId } = params;
+
+  const entry: EscalationLogEntry = {
+    timestamp: new Date().toISOString(),
+    event: 'escalation',
+    query,
+    category,
+    reason,
+    escalationType,
+    target,
+    severity,
+    correlationId,
   };
 
   const line = JSON.stringify(entry) + '\n';

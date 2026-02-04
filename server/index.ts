@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { logQuery, logResponseOutcome } from './logger.js';
+import { logQuery, logResponseOutcome, logEscalationEvent } from './logger.js';
 import { GeminiService } from './src/services/geminiService.js';
 
 const app = express();
@@ -247,6 +247,30 @@ app.post('/api/log-query', (req: express.Request, res: express.Response) => {
   }
   logQuery(query, category);
   res.status(200).json({ success: true });
+});
+
+// ---------------------------------------------
+// Escalation Logging Endpoint
+// ---------------------------------------------
+app.post('/api/log-escalation', (req: express.Request, res: express.Response) => {
+  const { query, category, reason, escalationType, target, severity, correlationId } = req.body || {};
+
+  if (typeof query !== 'string' || query.trim().length === 0) {
+    return res.status(400).json({ error: 'Invalid or missing "query"' });
+  }
+  if (typeof category !== 'string' || category.trim().length === 0) {
+    return res.status(400).json({ error: 'Invalid or missing "category"' });
+  }
+  if (typeof reason !== 'string' || reason.trim().length === 0) {
+    return res.status(400).json({ error: 'Invalid or missing "reason"' });
+  }
+  const allowedTypes = ['human_review', 'support', 'moderation', 'other'];
+  if (!allowedTypes.includes(escalationType)) {
+    return res.status(400).json({ error: 'Invalid "escalationType"' });
+  }
+
+  logEscalationEvent({ query, category, reason, escalationType, target, severity, correlationId });
+  return res.status(200).json({ ok: true });
 });
 
 // ---------------------------------------------

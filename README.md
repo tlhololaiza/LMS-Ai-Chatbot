@@ -298,6 +298,78 @@ The LMS features a **Google Gemini AI-powered** backend that provides intelligen
 - **RAG System** for enhanced responses
 - **Server-Sent Events (SSE)** for real-time streaming
 
+---
+
+## 🧾 Query Logging (Response Outcome) — Implemented
+
+This project logs all chat queries and their outcomes to a structured JSONL file for auditing and troubleshooting.
+
+### Where logs are stored
+- `server/query_logs.jsonl` (append-only JSON Lines)
+
+### Logged entries
+- Query entry (created for every request):
+  - `timestamp` — ISO string
+  - `query` — original text
+  - `category` — source/category (e.g., `dashboard`, `general`)
+
+- Response outcome entry (created after the AI generates a reply or an error occurs):
+  - `timestamp` — ISO string
+  - `event` — always `"response_outcome"`
+  - `query` — echoes original query
+  - `category` — echoes original category
+  - `outcome` — `"success" | "error"`
+  - `responsePreview` — trimmed first 200 chars of AI response (only when `outcome = success`)
+  - `errorMessage` — error text (only when `outcome = error`)
+  - `model` — e.g., `"gemini-pro"`
+  - `aiError` — `true` if the AI produced an error-like text (e.g., rate limit message)
+
+### Why classification was needed
+Some AI failures return user-friendly error text instead of throwing exceptions. We detect these and log them as `outcome = error` with an `aiError` flag so audits clearly distinguish AI errors from successful responses.
+
+### How to test it (Windows PowerShell)
+1) Start the backend:
+```powershell
+cd S:\CodeTribe\FINAL_PROJECTS\updated2\LMS-Ai-Chatbot\server
+npm run dev
+```
+
+2) Send a standard chat request:
+```powershell
+$body = @{
+  message = "Explain closures in JavaScript"
+  conversationHistory = @(@{ role = "user"; content = "I’m confused about scope" })
+  metadata = @{ source = "dashboard" }
+} | ConvertTo-Json -Depth 10
+
+Invoke-RestMethod -Uri "http://localhost:4000/api/chat" -Method POST -ContentType "application/json" -Body $body
+```
+
+3) Inspect the last log entries:
+```powershell
+Get-Content S:\CodeTribe\FINAL_PROJECTS\updated2\LMS-Ai-Chatbot\server\query_logs.jsonl | Select-Object -Last 6
+```
+
+Expected examples:
+```json
+{"timestamp":"...","query":"Explain closures in JavaScript","category":"dashboard"}
+{"timestamp":"...","event":"response_outcome","query":"Explain closures in JavaScript","category":"dashboard","outcome":"success","responsePreview":"Closures are...","model":"gemini-pro"}
+```
+or, when AI returns an error-like message:
+```json
+{"timestamp":"...","event":"response_outcome","query":"Explain closures in JavaScript","category":"dashboard","outcome":"error","errorMessage":"Sorry, I encountered an error. Please try again.","model":"gemini-pro","aiError":true}
+```
+
+### POPIA considerations
+- We trim response previews to 200 chars and avoid logging full message bodies.
+- Do not include PII in metadata; keep `category/source` generic.
+
+### Implementation locations
+- Backend logging functions: `server/logger.ts`
+- Endpoints wiring: `server/index.ts` (`/api/chat` and `/api/chat/stream`)
+
+Status: ✅ Completed (response outcome logging)
+
 ### Getting Google Gemini API Key
 
 1. **Get Free API Key:**

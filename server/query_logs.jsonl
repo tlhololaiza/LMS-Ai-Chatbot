@@ -12,3 +12,10 @@
 {"timestamp":"2026-02-04T13:21:42.898Z","query":"Hi My name is mosa","category":"general"}
 {"timestamp":"2026-02-04T13:21:42.903Z","query":"Hi My name is mosa","category":"general"}
 {"timestamp":"2026-02-04T13:21:43.700Z","event":"response_outcome","query":"Hi My name is mosa","category":"general","outcome":"error","errorMessage":"Sorry, I encountered an error. Please try again.","model":"gemini-pro","aiError":true}
+{"timestamp":"2026-02-04T13:56:14.253Z","query":"java script","category":"general"}
+{"timestamp":"2026-02-04T13:56:14.260Z","query":"java script","category":"general"}
+{"timestamp":"2026-02-04T13:56:15.032Z","event":"response_outcome","query":"java script","category":"general","outcome":"error","errorMessage":"Sorry, I encountered an error. Please try again.","model":"gemini-pro","aiError":true}
+{"timestamp":"2026-02-04T15:58:45.205Z","query":"my name is mosa","category":"general"}
+{"timestamp":"2026-02-04T15:58:45.224Z","query":"my name is mosa","category":"general"}
+{"timestamp":"2026-02-04T15:58:46.516Z","event":"response_outcome","query":"my name is mosa","category":"general","outcome":"error","errorMessage":"Sorry, I encountered an error. Please try again.","model":"gemini-pro","aiError":true}
+{"timestamp":"2026-02-04T16:07:05.271Z","event":"escalation","query":"Explain closures in JavaScript","category":"dashboard","reason":"AI low confidence","escalationType":"human_review","target":"mentor","severity":"medium","correlationId":"conv-12345"}
