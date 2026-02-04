@@ -285,6 +285,613 @@ npm run verify:setup     # Verify API client setup
 
 ---
 
+## 🤖 AI Integration
+
+### Backend Architecture
+
+The LMS features a **Google Gemini AI-powered** backend that provides intelligent responses with knowledge base augmentation (RAG).
+
+**Backend Components:**
+- **Express.js API Server** (runs on port 4000)
+- **Google Gemini Pro** AI model
+- **Knowledge Base** with 10+ concepts and FAQs
+- **RAG System** for enhanced responses
+- **Server-Sent Events (SSE)** for real-time streaming
+
+### Getting Google Gemini API Key
+
+1. **Get Free API Key:**
+   - Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Click "Create API Key"
+   - Copy the generated key
+
+2. **Set Environment Variable:**
+   ```bash
+   cd server
+   # Create .env file if it doesn't exist
+   echo "GOOGLE_GEMINI_API_KEY=your_api_key_here" > .env
+   ```
+
+3. **Verify Setup:**
+   ```bash
+   npm run verify:setup
+   ```
+
+⚠️ **Security Warning:** Never commit your API key to version control. The `.gitignore` already excludes `.env` files.
+
+### Backend Setup Instructions
+
+#### 1. Install Backend Dependencies
+
+```bash
+cd server
+npm install
+```
+
+This installs:
+- `express` - Web framework
+- `@google/generative-ai` - Gemini SDK
+- `cors` - Cross-Origin Resource Sharing
+- `dotenv` - Environment variables
+- `tsx` - TypeScript execution
+
+#### 2. Configure Environment Variables
+
+Create `server/.env`:
+
+```env
+# Required: Google Gemini API Key
+GOOGLE_GEMINI_API_KEY=your_api_key_here
+
+# Optional: Server port (default 4000)
+PORT=4000
+```
+
+#### 3. Start Backend Server
+
+```bash
+# From server directory
+npm run dev
+
+# Or from root directory
+cd server && npm run dev
+```
+
+**Expected Output:**
+```
+Server running on port 4000
+Gemini Service initialized
+```
+
+### Starting Both Services
+
+#### Development Mode (Recommended)
+
+**Terminal 1 - Start Backend:**
+```bash
+cd server
+npm run dev
+# Output: Server running on port 4000
+```
+
+**Terminal 2 - Start Frontend:**
+```bash
+npm run dev
+# Output: VITE v5.4.19 ready in 123 ms
+# ➜  Local:   http://localhost:5173/
+```
+
+Then open your browser to:
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:4000
+
+#### Production Build
+
+```bash
+# Build frontend
+npm run build
+
+# Build creates optimized bundle in dist/
+# Ready for deployment
+
+# Backend runs with npm run dev in production
+# Consider using PM2, systemd, or Docker for production
+```
+
+### API Endpoint Documentation
+
+#### Health Check
+
+**Request:**
+```bash
+GET http://localhost:4000/api/health
+```
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-02-04T12:34:56.789Z"
+}
+```
+
+#### Chat Endpoint (Non-Streaming)
+
+**Request:**
+```bash
+POST http://localhost:4000/api/chat
+Content-Type: application/json
+
+{
+  "message": "What are React hooks?",
+  "conversationHistory": [
+    {
+      "role": "user",
+      "content": "Hello"
+    },
+    {
+      "role": "assistant",
+      "content": "Hi! How can I help you today?"
+    }
+  ],
+  "metadata": {
+    "source": "chatbot",
+    "courseId": "react-101",
+    "userId": "user123"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "response": "React hooks are functions that let you use state and other React features in functional components. The most common hook is useState for managing component state...",
+  "timestamp": "2026-02-04T12:34:56.789Z",
+  "conversationId": "conv-1707038096789"
+}
+```
+
+#### Streaming Chat Endpoint
+
+**Request:**
+```bash
+POST http://localhost:4000/api/chat/stream
+Content-Type: application/json
+
+{
+  "message": "Explain useState",
+  "conversationHistory": [],
+  "metadata": {
+    "source": "text-highlight"
+  }
+}
+```
+
+**Response (Server-Sent Events):**
+```
+data: {"chunk":"React hooks"}
+
+data: {"chunk":" are functions"}
+
+data: {"chunk":" that let you"}
+
+data: [DONE]
+```
+
+**Frontend Usage:**
+```typescript
+import { sendMessage, streamMessage } from '@/services/apiClient';
+
+// Non-streaming
+const response = await sendMessage('What is JSX?');
+console.log(response);
+
+// Streaming (real-time chunks)
+for await (const chunk of streamMessage('Explain useState')) {
+  console.log(chunk); // Process chunk by chunk
+}
+```
+
+### Response Features
+
+**Knowledge Base Integration:**
+- Responses automatically include relevant concepts from the knowledge base
+- FAQs are matched and integrated into responses
+- Source citations appear naturally in responses
+
+**Example Response:**
+```
+Hooks are functions that let you "hook into" React state and lifecycle features. 
+
+Key concepts:
+• useState: Manage component state
+• useEffect: Side effects and lifecycle
+• useContext: Share data between components
+
+These are the most fundamental hooks. Once you master them, you can explore advanced hooks like useReducer, useCallback, and useMemo.
+
+Related: You might also want to learn about custom hooks and the Rules of Hooks!
+```
+
+### Troubleshooting
+
+#### API Key Issues
+
+**Error:** `GOOGLE_GEMINI_API_KEY is not defined`
+
+**Solution:**
+1. Check `server/.env` exists
+2. Verify API key is set: `echo $GOOGLE_GEMINI_API_KEY`
+3. Restart backend server: `npm run dev`
+
+#### Connection Issues
+
+**Error:** `Cannot connect to http://localhost:4000`
+
+**Solution:**
+1. Verify backend is running: `curl http://localhost:4000/api/health`
+2. Check port 4000 is not in use: `lsof -i :4000` (macOS/Linux)
+3. Try different port: `PORT=5000 npm run dev`
+
+#### Rate Limiting
+
+**Error:** `Error 429: Too many requests`
+
+**Solution:**
+- Google Gemini API has rate limits on free tier
+- Add exponential backoff retry logic
+- Consider upgrading to paid tier for higher limits
+
+#### Slow Responses
+
+**Issue:** AI responses taking 5+ seconds
+
+**Solution:**
+1. Check internet connection
+2. Try shorter/simpler prompts
+3. Use streaming endpoint for better UX
+4. Consider caching responses
+
+#### Empty Responses
+
+**Error:** API returns empty response
+
+**Solution:**
+1. Check message length (should be > 0)
+2. Verify API key is valid
+3. Check Gemini API status: [Google AI Status](https://status.cloud.google.com/)
+4. Review backend logs: `npm run dev` shows errors
+
+#### CORS Errors
+
+**Error:** `Access to XMLHttpRequest blocked by CORS`
+
+**Solution:**
+- CORS is enabled in backend (line in `server/index.ts`)
+- Verify frontend is calling `http://localhost:4000`
+- Check frontend `.env`: `VITE_API_URL=http://localhost:4000`
+
+#### Frontend Can't Find Backend
+
+**Error:** `POST http://localhost:4000/api/chat net::ERR_CONNECTION_REFUSED`
+
+**Solution:**
+1. Start backend first: `cd server && npm run dev`
+2. Wait 3 seconds for server startup
+3. Verify backend is ready: `curl http://localhost:4000/api/health`
+4. Check both services are running on correct ports
+
+### Common Questions
+
+**Q: Can I use a different AI API?**  
+A: Yes! You can replace GeminiService with OpenAI, Claude, or other APIs. The interface is modular.
+
+**Q: How does the knowledge base work?**  
+A: The backend searches the knowledge base for relevant concepts when processing queries and injects them into the prompt for context-aware responses (RAG pattern).
+
+**Q: Can I modify the knowledge base?**  
+A: Yes! Edit `server/src/data/knowledgeBase.ts` to add more concepts, FAQs, and learning paths.
+
+**Q: Why isn't my API key working?**  
+A: Verify it's a valid Gemini API key from [makersuite.google.com](https://makersuite.google.com/app/apikey), not a Cloud API key.
+
+---
+
+## 🐳 Docker Setup
+
+Running the entire application stack in Docker provides isolation, consistency, and easy deployment across environments.
+
+### Prerequisites
+
+- **Docker** - [Install Docker Desktop](https://www.docker.com/products/docker-desktop)
+- **Docker Compose** - Usually included with Docker Desktop
+
+**Verify Installation:**
+```bash
+docker --version
+docker-compose --version
+```
+
+### Docker Architecture
+
+```
+docker-compose.yml
+├── frontend (Vite React App)
+│   ├── Port: 8080
+│   ├── Dockerfile: Dockerfile (Multi-stage build)
+│   └── Environment: VITE_API_URL=http://backend:4000
+│
+└── backend (Express + Gemini)
+    ├── Port: 4000
+    ├── Dockerfile: server/Dockerfile
+    └── Environment: GOOGLE_GEMINI_API_KEY (from .env)
+```
+
+### Files Created
+
+#### 1. `docker-compose.yml` - Service Orchestration
+
+Complete Docker Compose configuration for running both services:
+
+**Features:**
+- Multi-container setup (frontend + backend)
+- Environment variable management
+- Volume mounting for development
+- Port mapping (8080 → frontend, 4000 → backend)
+- Service dependency management
+- Network isolation
+
+#### 2. `server/Dockerfile` - Backend Container
+
+Node.js backend with Gemini SDK:
+
+**Build Stages:**
+- **Build:** TypeScript compilation, dependency installation
+- **Runtime:** Minimal Node.js image with only production dependencies
+
+**Optimizations:**
+- Multi-stage build reduces image size
+- Non-root user for security
+- Health check included
+- Production optimizations
+
+#### 3. `Dockerfile` - Frontend Container (Optional)
+
+Vite React frontend with multi-stage build:
+
+**Build Stages:**
+- **Build:** Vite compilation, TypeScript checking
+- **Runtime:** Nginx for optimized serving
+
+**Features:**
+- Static file serving
+- Gzip compression
+- Production build optimization
+- SPA routing support
+
+### Quick Start with Docker
+
+#### 1. Build and Run
+
+```bash
+# Build images and start services
+docker-compose up --build
+
+# Or run in background
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+**Expected Output:**
+```
+Creating network "lms-ai-chatbot_default" with driver "bridge"
+Building backend
+[+] Building 45.2s
+...
+Creating lms-ai-chatbot-backend-1  ... done
+Creating lms-ai-chatbot-frontend-1 ... done
+Attaching to lms-ai-chatbot-backend-1, lms-ai-chatbot-frontend-1
+
+backend-1   | Server running on port 4000
+frontend-1  | VITE v5.4.19 ready in 456 ms
+```
+
+#### 2. Access Services
+
+- **Frontend:** http://localhost:8080
+- **Backend API:** http://localhost:4000
+- **API Health Check:** curl http://localhost:4000/api/health
+
+#### 3. Environment Configuration
+
+Create `.env` file in project root:
+
+```env
+# Frontend (optional, defaults shown)
+VITE_API_URL=http://backend:4000
+
+# Backend (required for API key)
+GOOGLE_GEMINI_API_KEY=your_api_key_here
+PORT=4000
+```
+
+**Note:** The backend service name `backend` is resolved automatically within Docker network.
+
+### Common Docker Commands
+
+```bash
+# Build images
+docker-compose build
+
+# Start services
+docker-compose up
+
+# Start in background
+docker-compose up -d
+
+# View running services
+docker-compose ps
+
+# View logs
+docker-compose logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Stop services
+docker-compose stop
+
+# Stop and remove containers
+docker-compose down
+
+# Stop and remove everything (including volumes)
+docker-compose down -v
+
+# Rebuild and restart specific service
+docker-compose up -d --build backend
+
+# Execute command in container
+docker-compose exec backend npm run dev
+docker-compose exec frontend sh
+
+# View environment variables in container
+docker-compose exec backend env
+```
+
+### Debugging Docker Issues
+
+#### Container Won't Start
+
+```bash
+# Check logs
+docker-compose logs backend
+docker-compose logs frontend
+
+# Rebuild from scratch
+docker-compose down -v
+docker-compose build --no-cache
+docker-compose up
+```
+
+#### Port Already in Use
+
+```bash
+# Change ports in docker-compose.yml
+# Or kill process using port:
+lsof -i :8080  # Find process on port 8080
+kill -9 <PID>  # Kill by process ID
+```
+
+#### API Connection Issues
+
+```bash
+# Test backend from frontend container
+docker-compose exec frontend curl http://backend:4000/api/health
+
+# Check network connectivity
+docker-compose exec frontend ping backend
+
+# View backend logs
+docker-compose logs backend
+```
+
+#### API Key Not Working in Docker
+
+```bash
+# Verify env variable is set
+docker-compose exec backend env | grep GOOGLE
+
+# Rebuild with new environment variable
+docker-compose down
+echo "GOOGLE_GEMINI_API_KEY=your_new_key" > .env
+docker-compose up -d --build backend
+```
+
+### Docker Development Workflow
+
+#### Hot Reload Development
+
+```bash
+# Services automatically reload on file changes
+docker-compose up
+
+# Watch logs
+docker-compose logs -f
+
+# Edit files locally, Docker volumes sync automatically
+# Frontend: http://localhost:8080 auto-refreshes
+# Backend: tsx watch auto-reloads TypeScript
+```
+
+#### Inspect Docker Volumes
+
+```bash
+# List volumes
+docker volume ls
+
+# Inspect volume
+docker volume inspect lms-ai-chatbot_server_node_modules
+
+# View files in volume
+docker run -v lms-ai-chatbot_server_node_modules:/data ubuntu ls -la /data
+```
+
+### Production Deployment
+
+#### Build for Production
+
+```bash
+# Build frontend with production optimizations
+npm run build
+
+# Create production docker image
+docker build -f Dockerfile -t lms-ai-chatbot:latest --target production .
+docker build -f server/Dockerfile -t lms-ai-chatbot-backend:latest server/
+
+# Push to Docker Hub/Registry
+docker tag lms-ai-chatbot:latest your-registry/lms-ai-chatbot:latest
+docker push your-registry/lms-ai-chatbot:latest
+```
+
+#### Environment Variables in Production
+
+Create `.env.production`:
+```env
+# Use production domain
+VITE_API_URL=https://api.yourdomain.com
+GOOGLE_GEMINI_API_KEY=your_production_key
+
+# Scale backend if needed
+DOCKER_REPLICAS=3
+```
+
+#### Monitor Containers
+
+```bash
+# View resource usage
+docker stats
+
+# View container logs
+docker logs lms-ai-chatbot-backend-1 -f
+
+# Get container shell
+docker exec -it lms-ai-chatbot-backend-1 sh
+```
+
+### Advantages of Docker
+
+✅ **Consistency:** Same environment across dev, test, and production  
+✅ **Isolation:** Services don't conflict with system packages  
+✅ **Scalability:** Easy to add more instances with Docker Swarm/Kubernetes  
+✅ **Deployment:** One command to deploy entire stack  
+✅ **Team Collaboration:** Everyone works in identical environment  
+
+---
+
 ## 🌿 Branch Structure
 
 ### Main Branches
