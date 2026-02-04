@@ -370,6 +370,90 @@ or, when AI returns an error-like message:
 
 Status: ✅ Completed (response outcome logging)
 
+---
+
+## 🧭 Escalation Event Logging — Implemented
+
+Record when a conversation is escalated (e.g., to a mentor/support/moderation) with reason and context. Entries are appended alongside query and outcome logs.
+
+### API Endpoint
+- `POST /api/log-escalation`
+
+### Payload
+```json
+{
+  "query": "Explain closures in JavaScript",
+  "category": "dashboard",
+  "reason": "Low confidence from AI",
+  "escalationType": "human_review",
+  "target": "mentor",
+  "severity": "medium",
+  "correlationId": "conv-12345"
+}
+```
+
+### Example log entry
+```json
+{"timestamp":"...","event":"escalation","query":"Explain closures in JavaScript","category":"dashboard","reason":"Low confidence from AI","escalationType":"human_review","target":"mentor","severity":"medium","correlationId":"conv-12345"}
+```
+
+### How to test (Windows PowerShell)
+```powershell
+cd S:\CodeTribe\FINAL_PROJECTS\updated2\LMS-Ai-Chatbot\server
+npm run dev
+
+$body = @{
+  query = "Explain closures in JavaScript"
+  category = "dashboard"
+  reason = "Low confidence from AI"
+  escalationType = "human_review"
+  target = "mentor"
+  severity = "medium"
+  correlationId = "conv-12345"
+} | ConvertTo-Json -Depth 10
+
+Invoke-RestMethod -Uri "http://localhost:4000/api/log-escalation" -Method POST -ContentType "application/json" -Body $body
+Get-Content S:\CodeTribe\FINAL_PROJECTS\updated2\LMS-Ai-Chatbot\server\query_logs.jsonl | Select-Object -Last 4
+```
+
+### Implementation locations
+- Logger function: `server/logger.ts` (`logEscalationEvent`)
+- Endpoint: `server/index.ts` (`POST /api/log-escalation`)
+
+Status: ✅ Completed (backend + endpoint; wire frontend triggers as needed)
+
+---
+
+## 🔐 Tamper-Evident Logging (Hash Chain) — Implemented (Conceptual)
+
+Each new log entry (query, outcome, escalation) includes a **hash chain** so tampering is detectable:
+- `chainPrevHash` — previous entry’s hash
+- `chainHash` — SHA-256 of `(chainPrevHash + canonical JSON payload)`
+- `chainAlgo` — `sha256`
+
+### Verification endpoint
+- `GET /api/logs/verify` → returns `{ ok: boolean, issues: string[] }`
+
+### How to test (Windows PowerShell)
+```powershell
+Invoke-RestMethod -Uri "http://localhost:4000/api/logs/verify" -Method GET
+# Expected: { ok: true, issues: [] } for new, untampered entries
+```
+
+If you run verification on an old log file (entries written before hash chaining), you’ll see `hash mismatch` lines. That’s expected—archive old logs or start fresh to maintain a clean chain.
+
+### Notes
+- POPIA: No PII is introduced; chain fields only strengthen audit integrity.
+- For stronger guarantees, consider daily log rotation and anchoring the terminal hash externally.
+
+### Implementation locations
+- Chain logic & verification: `server/logger.ts`
+- Verify endpoint: `server/index.ts` (`GET /api/logs/verify`)
+
+Status: ✅ Completed (conceptual implementation with verification)
+
+---
+
 ### Getting Google Gemini API Key
 
 1. **Get Free API Key:**
