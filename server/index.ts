@@ -6,7 +6,38 @@ import { GeminiService } from './src/services/geminiService.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const geminiService = new GeminiService();
+let geminiService: GeminiService;
+try {
+  geminiService = new GeminiService();
+} catch (err) {
+  console.error('Failed to initialize GeminiService:', err);
+  // Fallback shim to keep the server running with clear error messages
+  geminiService = {
+    async generateResponse() {
+      throw new Error('Gemini API key missing or invalid');
+    },
+    async *streamResponse() {
+      yield 'Error: Gemini API not configured.';
+    },
+    async healthCheck() {
+      return { ok: false, error: 'Gemini API not configured', model: 'unknown' };
+    },
+  } as unknown as GeminiService;
+}
+// List available models for the current API key (simple REST proxy)
+app.get('/api/models', async (_req: express.Request, res: express.Response) => {
+  try {
+    const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+    if (!key) return res.status(400).json({ error: 'Missing GEMINI_API_KEY' });
+    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
+    const r = await fetch(url);
+    const j = await r.json();
+    const models = Array.isArray(j.models) ? j.models.map((m: any) => ({ name: m.name, displayName: m.displayName })) : [];
+    res.json({ models });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+  }
+});
 
 // Rate limiting configuration (30 requests per minute per IP)
 const apiLimiter = rateLimit({
@@ -61,6 +92,25 @@ app.use(express.json({ limit: '10kb' })); // Limit body size
 // Apply rate limiting to chat endpoints
 app.use('/api/chat', apiLimiter);
 
+// Shared types and validators for optional history
+type ChatRole = 'user' | 'assistant';
+interface ChatHistoryMessage {
+  role: ChatRole;
+  content: string;
+}
+function isValidHistory(history: unknown): history is ChatHistoryMessage[] {
+  if (!Array.isArray(history)) return false;
+  return history.every(
+    (m) =>
+      m &&
+      typeof m === 'object' &&
+      (m as ChatHistoryMessage).role &&
+      (m as ChatHistoryMessage).content &&
+      typeof (m as ChatHistoryMessage).content === 'string' &&
+      ((m as ChatHistoryMessage).role === 'user' || (m as ChatHistoryMessage).role === 'assistant')
+  );
+}
+
 // Helper to classify AI error-like responses
 function isAiErrorResponse(text: string): boolean {
   const t = (text || '').toLowerCase();
@@ -73,20 +123,22 @@ function isAiErrorResponse(text: string): boolean {
 }
 
 // Health check endpoint
-app.get('/api/health', (req: express.Request, res: express.Response) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+// Removed duplicate simple health endpoint; consolidated below with key status
 
 // Chat endpoint (non-streaming) with validation
 app.post('/api/chat', validateChatInput, async (req: express.Request, res: express.Response) => {
   try {
-    const { message, conversationHistory, metadata } = req.body;
+  const { message, conversationHistory, metadata, useAgent, useAgentTools } = req.body;
 
     // Log the query
     logQuery(message, metadata?.source || 'general');
 
     // Generate response
-    const response = await geminiService.generateResponse(message, conversationHistory || []);
+    const response = useAgentTools
+      ? await geminiService.agentResponseWithTools(message, conversationHistory || [])
+      : useAgent
+      ? await geminiService.agentResponse(message, conversationHistory || [])
+      : await geminiService.generateResponse(message, conversationHistory || []);
 
     // Classify and log outcome
     const aiError = isAiErrorResponse(response);
@@ -104,6 +156,9 @@ app.post('/api/chat', validateChatInput, async (req: express.Request, res: expre
       response,
       timestamp: new Date().toISOString(),
       conversationId: `conv-${Date.now()}`,
+      model: (geminiService as any).modelName || 'unknown',
+      agent: !!useAgent || !!useAgentTools,
+      tools: !!useAgentTools,
     });
   } catch (error) {
     console.error('Chat API error:', error);
@@ -115,71 +170,23 @@ app.post('/api/chat', validateChatInput, async (req: express.Request, res: expre
       errorMessage: error instanceof Error ? error.message : 'Unknown error',
       model: 'gemini-pro',
     });
-    res.status(500).json({
-      error: 'Failed to generate response',
-      message: error instanceof Error ? error.message : 'Unknown error',
+    // Detect quota/429 and return appropriate status to the client
+    const raw = error instanceof Error ? error.message : String(error);
+    let status = 500;
+    let msg = raw;
+    if (raw.includes('RESOURCE_EXHAUSTED') || raw.includes('code=429') || raw.includes('"code":429')) {
+      status = 429;
+      msg = 'Quota exceeded or rate-limited. Please try again later or check billing/plan.';
+    }
+    res.status(status).json({
+      error: status === 429 ? 'RATE_LIMITED' : 'Failed to generate response',
+      message: msg,
     });
   }
 });
 
 // Streaming chat endpoint with validation
-app.post('/api/chat/stream', validateChatInput, async (req: express.Request, res: express.Response) => {
-  try {
-    const { message, conversationHistory, metadata } = req.body;
-
-    // Log the query
-    logQuery(message, metadata?.source || 'general');
-
-    // Set headers for SSE (Server-Sent Events)
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    // Generate response (for now, we'll send it in chunks)
-    // In a real implementation, you'd use Gemini's streaming API
-    const response = await geminiService.generateResponse(message, conversationHistory || []);
-
-    // Classify and log outcome for streaming
-    const aiError = isAiErrorResponse(response);
-    logResponseOutcome({
-      query: message,
-      category: metadata?.source || 'general',
-      outcome: aiError ? 'error' : 'success',
-      response: aiError ? undefined : response,
-      errorMessage: aiError ? response : undefined,
-      model: 'gemini-pro',
-      aiError,
-    });
-
-    // Simulate streaming by sending response in chunks
-    const words = response.split(' ');
-    const chunkSize = 5;
-
-    for (let i = 0; i < words.length; i += chunkSize) {
-      const chunk = words.slice(i, i + chunkSize).join(' ') + ' ';
-      res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
-      // Small delay to simulate streaming
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
-
-    res.write('data: [DONE]\n\n');
-    res.end();
-  } catch (error) {
-    console.error('Streaming chat API error:', error);
-    // Log response outcome (error for streaming)
-    logResponseOutcome({
-      query: req.body?.message || '',
-      category: req.body?.metadata?.source || 'general',
-      outcome: 'error',
-      errorMessage: error instanceof Error ? error.message : 'Unknown error',
-      model: 'gemini-pro',
-    });
-    res.status(500).json({
-      error: 'Failed to generate response',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+// Removed duplicate simulated streaming endpoint; consolidated below with true streaming
 // ---------------------------------------------
 // Health Check Endpoint
 // ---------------------------------------------
@@ -200,88 +207,18 @@ app.get('/api/health', (_req, res: express.Response<HealthResponse>) => {
   });
 });
 
-// ---------------------------------------------
-// Chat Endpoint (non-streaming)
-// ---------------------------------------------
-type ChatRole = 'user' | 'assistant';
-interface ChatHistoryMessage {
-  role: ChatRole;
-  content: string;
-}
-interface ChatRequest {
-  message: string;
-  history?: ChatHistoryMessage[];
-}
-interface ChatSuccessResponse {
-  ok: true;
-  data: { reply: string };
-}
-interface ErrorResponse {
-  ok: false;
-  error: string;
-  code?: string;
-}
-
-function isValidHistory(history: unknown): history is ChatHistoryMessage[] {
-  if (!Array.isArray(history)) return false;
-  return history.every(
-    (m) =>
-      m &&
-      typeof m === 'object' &&
-      (m as ChatHistoryMessage).role &&
-      (m as ChatHistoryMessage).content &&
-      typeof (m as ChatHistoryMessage).content === 'string' &&
-      ((m as ChatHistoryMessage).role === 'user' || (m as ChatHistoryMessage).role === 'assistant')
-  );
-}
-
-app.post(
-  '/api/chat',
-  async (
-    req: express.Request<unknown, unknown, ChatRequest>,
-    res: express.Response<ChatSuccessResponse | ErrorResponse>
-  ) => {
-    try {
-      const { message, history } = req.body || ({} as ChatRequest);
-
-      if (!message || typeof message !== 'string' || message.trim().length === 0) {
-        return res
-          .status(400)
-          .json({ ok: false, error: 'Invalid "message" in request body', code: 'BAD_REQUEST' });
-      }
-      if (history && !isValidHistory(history)) {
-        return res.status(400).json({ ok: false, error: 'Invalid "history" format', code: 'BAD_REQUEST' });
-      }
-
-      const reply = await geminiService.generateResponse(message, history || []);
-
-      // Classify and log outcome for typed endpoint
-      const aiError = isAiErrorResponse(reply);
-      logResponseOutcome({
-        query: message,
-        category: 'general',
-        outcome: aiError ? 'error' : 'success',
-        response: aiError ? undefined : reply,
-        errorMessage: aiError ? reply : undefined,
-        model: 'gemini-pro',
-        aiError,
-      });
-
-      return res.status(200).json({ ok: true, data: { reply } });
-    } catch (err) {
-      console.error('POST /api/chat error:', err);
-      logResponseOutcome({
-        query: req.body?.message || '',
-        category: 'general',
-        outcome: 'error',
-        errorMessage: err instanceof Error ? err.message : 'Internal server error',
-        model: 'gemini-pro',
-        aiError: true,
-      });
-      return res.status(500).json({ ok: false, error: 'Internal server error', code: 'INTERNAL_ERROR' });
-    }
+// Gemini-specific health check using the service
+app.get('/api/health/gemini', async (_req, res: express.Response) => {
+  try {
+    const result = await geminiService.healthCheck();
+    return res.status(result.ok ? 200 : 500).json(result);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    return res.status(500).json({ ok: false, error: msg });
   }
-);
+});
+
+// Removed duplicate typed /api/chat endpoint; using the validated version above that matches frontend response shape
 
 app.post('/api/log-query', (req: express.Request, res: express.Response) => {
   const { query, category } = req.body;
@@ -363,7 +300,8 @@ app.post(
 
       // Stream chunks from Gemini service
       for await (const chunk of geminiService.streamResponse(message, history || [])) {
-        const payload = { delta: chunk };
+        // Use "chunk" property to match frontend stream parser
+        const payload = { chunk };
         res.write(`data: ${JSON.stringify(payload)}\n\n`);
       }
 
