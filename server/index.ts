@@ -3,6 +3,8 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { logQuery, logResponseOutcome, logEscalationEvent, verifyLogChain } from './logger.js';
 import { GeminiService } from './src/services/geminiService.js';
+import { generateEscalationDraft, sendEscalationEmail } from './src/services/escalationMailer.js';
+import { isJudgementRequired } from './src/logic/escalationThreshold.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -133,6 +135,17 @@ app.post('/api/chat', validateChatInput, async (req: express.Request, res: expre
     // Log the query
     logQuery(message, metadata?.source || 'general');
 
+    // Pre-check: if the query requires human judgement, escalate immediately with a draft
+    if (isJudgementRequired(message)) {
+      try {
+        const draft = await generateEscalationDraft({ query: message, conversation: Array.isArray(conversationHistory) ? conversationHistory.map((h: any) => `${h.role}: ${h.content}`) : [], category: metadata?.source, correlationId: `conv-${Date.now()}` });
+        return res.status(200).json({ escalated: true, escalationId: draft.escalationId, draft });
+      } catch (err) {
+        // Fall back to continuing to generate a response if draft generation fails
+        console.error('Failed to generate escalation draft:', err);
+      }
+    }
+
     // Generate response
     const response = useAgentTools
       ? await geminiService.agentResponseWithTools(message, conversationHistory || [])
@@ -249,8 +262,21 @@ app.post('/api/log-escalation', (req: express.Request, res: express.Response) =>
     return res.status(400).json({ error: 'Invalid "escalationType"' });
   }
 
+  // Persist audit log
   logEscalationEvent({ query, category, reason, escalationType, target, severity, correlationId });
-  return res.status(200).json({ ok: true });
+
+  try {
+    // Also attempt to generate an escalation email draft and return it to the caller for review
+    (async () => {})();
+  } catch {}
+
+  // Generate draft asynchronously and return immediate acknowledgement
+  generateEscalationDraft({ query, conversation: [], category, correlationId })
+    .then((draft) => res.status(200).json({ ok: true, draft }))
+    .catch((err) => {
+      console.error('Failed to generate draft:', err);
+      res.status(200).json({ ok: true });
+    });
 });
 
 // ---------------------------------------------
@@ -259,6 +285,24 @@ app.post('/api/log-escalation', (req: express.Request, res: express.Response) =>
 app.get('/api/logs/verify', (_req: express.Request, res: express.Response) => {
   const result = verifyLogChain();
   res.status(200).json(result);
+});
+
+// ---------------------------------------------
+// Send Escalation Email (final send after user review)
+// ---------------------------------------------
+app.post('/api/escalation/send', async (req: express.Request, res: express.Response) => {
+  const { escalationId, subject, body, recipients, from, correlationId } = req.body || {};
+  if (!escalationId || !subject || !body || !Array.isArray(recipients) || recipients.length === 0) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const result = await sendEscalationEmail({ escalationId, subject, body, recipients, from, correlationId });
+    return res.status(200).json({ ok: true, result });
+  } catch (err) {
+    console.error('Failed to send escalation email:', err);
+    return res.status(500).json({ error: 'Failed to send email', message: err instanceof Error ? err.message : String(err) });
+  }
 });
 
 // ---------------------------------------------

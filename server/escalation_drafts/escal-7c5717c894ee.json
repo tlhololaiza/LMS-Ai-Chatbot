@@ -1,0 +1,18 @@
+{
+  "escalationId": "escal-7c5717c894ee",
+  "query": "should I",
+  "conversation": [
+    "assistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.",
+    "user: Hi my name is Tlholo",
+    "assistant: Hello, Tlholo! It’s great to meet you. I am here to support you as you navigate your studies.\n\nAs your learning assistant, I can help you make the most of this platform. If you are just getting started, a good first step is to check your **Dashboard**, which gives you an overview of all your active classes and upcoming deadlines. \n\nFrom there, you can dive into your **Course Modules** to find your readings, videos, and assignments. If you're ever unsure about the requirements for a specific class, I recommend reviewing the **Syllabus** posted by your instructor, as it serves as a roadmap for everything you'll learn.\n\nHow can I help you today? Are you looking for a specific resource, or would you like help understanding a concept from one of your lessons?"
+  ],
+  "subject": "Inquiry Regarding Course Progression - Tlholo",
+  "body": "Dear Mentor,\n\nI hope you are having a productive week. I am reaching out to seek your expert guidance regarding my current learning path and the best way to proceed with my studies.\n\nI am currently seeking clarification on which specific steps I should take next in the curriculum. To resolve this, I have reviewed my Dashboard for an overview of my active classes and consulted the Course Syllabus as suggested by the learning assistant. While these resources provided a general roadmap, I am still unsure of the immediate priority between my upcoming readings and the next assignment.\n\nCould you please advise on the recommended next steps or confirm which module I should prioritize to stay aligned with the course objectives? I would appreciate your insight to ensure I am making the most of the resources available.\n\nThank you for your time and support.\n\nBest regards,\nTlholo",
+  "recipients": [
+    "mentor@example.com",
+    "facilitator@example.com"
+  ],
+  "estimatedResponseWindow": "24 to 48 business hours",
+  "createdAt": "2026-02-16T20:09:07.133Z",
+  "correlationId": "conv-1771272537379"
+}

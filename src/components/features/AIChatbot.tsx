@@ -34,7 +34,7 @@ import {
   formatPromptForLogging,
 } from '@/utils/promptBuilder';
 import { enhanceResponseWithCitations } from '@/utils/ragService';
-import { sendMessage, APIError } from '@/services/apiClient';
+import { sendMessage, APIError, sendEscalationEmail } from '@/services/apiClient';
 import { useToast } from '@/hooks/use-toast';
 
 // Frontend logQuery: send to backend API
@@ -95,6 +95,7 @@ interface ChatState {
   input: string;
   isTyping: boolean;
   lastHighlight?: HighlightSourceInfo;
+  pendingEscalation?: { escalationId: string; subject: string; body: string; recipients: string[] };
   editingMessageId?: string;
   editingContent: string;
   searchQuery: string;
@@ -113,6 +114,8 @@ type ChatAction =
   | { type: 'cancelEdit' }
   | { type: 'setEditingContent'; value: string }
   | { type: 'setSearchQuery'; value: string }
+  | { type: 'setPendingEscalation'; draft?: { escalationId: string; subject: string; body: string; recipients: string[] } }
+  | { type: 'clearPendingEscalation' }
   | { type: 'clearMessages' }
   | { type: 'setSources'; sources: Array<{ id: string; title: string; type: string }> };
 
@@ -157,6 +160,10 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
       return { ...state, editingContent: action.value };
     case 'setSearchQuery':
       return { ...state, searchQuery: action.value };
+      case 'setPendingEscalation':
+        return { ...state, pendingEscalation: action.draft };
+      case 'clearPendingEscalation':
+        return { ...state, pendingEscalation: undefined };
     case 'setSources':
       return { ...state, sourceSuggestions: action.sources };
     case 'clearMessages':
@@ -332,6 +339,17 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
         conversationHistory,
         metadata: apiMetadata,
       });
+
+      // If backend decided to escalate and returned a draft, surface it for user review
+      if (response.escalated && response.draft) {
+        try {
+          dispatch({ type: 'setPendingEscalation', draft: { escalationId: response.draft.escalationId, subject: response.draft.subject, body: response.draft.body, recipients: response.draft.recipients || [] } });
+        } catch {}
+        return {
+          content: `🔔 Your question has been escalated for human review. A draft email has been prepared for you to review and send.`,
+          sources: [],
+        };
+      }
 
       // Get prompt context for citations (still using local RAG)
       const prompt = buildContextAwarePrompt(message, metadata);
@@ -531,6 +549,42 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
     } finally {
       dispatch({ type: 'setTyping', value: false });
     }
+  };
+
+  // Send escalation email after user review
+  const handleSendEscalation = async () => {
+    const draft = state.pendingEscalation;
+    if (!draft) return;
+    dispatch({ type: 'setTyping', value: true });
+    try {
+      await sendEscalationEmail({ escalationId: draft.escalationId, subject: draft.subject, body: draft.body, recipients: draft.recipients });
+      // Show confirmation message in chat
+      const confirmMsg: ChatMessage = {
+        id: Date.now().toString(),
+        content: `✅ Escalation email sent to ${draft.recipients.join(', ')}.`,
+        sender: 'bot',
+        timestamp: new Date().toISOString(),
+        contextType: 'escalation',
+      };
+      dispatch({ type: 'addMessage', message: confirmMsg });
+      dispatch({ type: 'clearPendingEscalation' });
+    } catch (err) {
+      toast({ title: 'Failed to send email', description: err instanceof Error ? err.message : String(err), variant: 'destructive' });
+    } finally {
+      dispatch({ type: 'setTyping', value: false });
+    }
+  };
+
+  const handleUpdateDraftField = (field: 'subject' | 'body' | 'recipients', value: string) => {
+    const current = state.pendingEscalation;
+    if (!current) return;
+    let updated = { ...current };
+    if (field === 'recipients') {
+      updated.recipients = value.split(',').map(s => s.trim()).filter(Boolean);
+    } else {
+      (updated as any)[field] = value;
+    }
+    dispatch({ type: 'setPendingEscalation', draft: updated });
   };
 
   const handleStartEdit = (message: ChatMessage) => {
@@ -808,6 +862,33 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
         </div>
 
         <div className="p-4 border-t border-border">
+          {state.pendingEscalation && (
+            <div className="mb-3 p-3 rounded-md border border-border bg-background">
+              <div className="text-sm font-medium mb-1">Escalation draft — review before sending</div>
+              <input
+                className="w-full mb-2 px-2 py-1 border rounded"
+                value={state.pendingEscalation.subject}
+                onChange={(e) => handleUpdateDraftField('subject', e.target.value)}
+                placeholder="Email subject"
+              />
+              <input
+                className="w-full mb-2 px-2 py-1 border rounded"
+                value={state.pendingEscalation.recipients.join(', ')}
+                onChange={(e) => handleUpdateDraftField('recipients', e.target.value)}
+                placeholder="Recipients (comma separated)"
+              />
+              <textarea
+                className="w-full mb-2 px-2 py-1 border rounded min-h-[100px]"
+                value={state.pendingEscalation.body}
+                onChange={(e) => handleUpdateDraftField('body', e.target.value)}
+                placeholder="Email body"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleSendEscalation}>Send Escalation Email</Button>
+                <Button size="sm" variant="ghost" onClick={() => dispatch({ type: 'clearPendingEscalation' })}>Cancel</Button>
+              </div>
+            </div>
+          )}
           <div className="flex gap-2">
             <Input
               value={state.input}
