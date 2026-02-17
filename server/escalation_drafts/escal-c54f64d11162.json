@@ -1,0 +1,16 @@
+{
+  "escalationId": "escal-c54f64d11162",
+  "query": "Should I",
+  "conversation": [
+    "assistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform."
+  ],
+  "subject": "General Inquiry: Guidance Request Regarding Student Learning Path",
+  "body": "Hello,\n\nI hope you are having a productive week. I am writing to escalate a general inquiry from a student who is currently seeking guidance on how to proceed with their studies.\n\nThe student initiated a conversation with the query 'Should I', which suggests they are at a decision point regarding their academic progress. In the context of **Curriculum Sequencing**—the intentional ordering of learning materials to ensure prerequisite knowledge is met—the student appears to need expert human intervention to determine their next best steps.\n\nI have provided the student with an initial orientation to the platform and general support features; however, the query requires the specific expertise of a mentor to align their goals with the **Competency-based Learning** framework of this course. \n\nCould you please reach out to the student to provide personalized academic advising? This will help ensure they maintain momentum and follow the most effective path toward their learning objectives.\n\nBest regards,\n\nYour LMS Learning Assistant",
+  "recipients": [
+    "mentor@example.com",
+    "academic-support@example.com"
+  ],
+  "estimatedResponseWindow": "24 to 48 business hours",
+  "createdAt": "2026-02-16T23:38:27.648Z",
+  "correlationId": "conv-1771285094491"
+}
