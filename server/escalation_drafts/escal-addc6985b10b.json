@@ -1,0 +1,19 @@
+{
+  "escalationId": "escal-addc6985b10b",
+  "query": "Grade",
+  "conversation": [
+    "assistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.",
+    "user: Hi",
+    "assistant: Hello! It's great to see you again. I'm here to help you with your learning journey.\n\nIf you are currently working on your React modules, I can help explain key concepts to you. For example, we could dive into:\n\n*   **Props:** These are \"properties\" used to pass data from a parent component to a child component. They are read-only, which helps keep your components predictable and reusable.\n*   **useEffect:** This is a powerful Hook used to manage side effects in your functional components, like fetching data from an API or manually updating the DOM.\n\nWould you like to explore one of these topics in more detail, or do you have a specific question about your coursework? I'm here to help!\n\n---\n### 📚 Sources\n❓ [1] How do I pass data from child to parent component? (faq)\n💡 [2] Props (concept)\n💡 [3] useEffect Hook (concept)\n💡 [4] Key Prop (concept)\n💡 [5] Default and Named Exports (concept)\n",
+    "user: What is React",
+    "assistant: Too many requests. Please wait a moment and try again."
+  ],
+  "subject": "Escalation: review requested — Grade",
+  "body": "Hello,\n\nThe learning assistant escalated the following learner query for your review:\n\n\"Grade\"\n\nRecent context:\nassistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.\nuser: Hi\nassistant: Hello! It's great to see you again. I'm here to help you with your learning journey.\n\nIf you are currently working on your React modules, I can help explain key concepts to you. For example, we could dive into:\n\n*   **Props:** These are \"properties\" used to pass data from a parent component to a child component. They are read-only, which helps keep your components predictable and reusable.\n*   **useEffect:** This is a powerful Hook used to manage side effects in your functional components, like fetching data from an API or manually updating the DOM.\n\nWould you like to explore one of these topics in more detail, or do you have a specific question about your coursework? I'm here to help!\n\n---\n### 📚 Sources\n❓ [1] How do I pass data from child to parent component? (faq)\n💡 [2] Props (concept)\n💡 [3] useEffect Hook (concept)\n💡 [4] Key Prop (concept)\n💡 [5] Default and Named Exports (concept)\n\nuser: What is React\nassistant: Too many requests. Please wait a moment and try again.\n\nPlease advise on next steps.\n\nThanks,\nLMS AI Assistant",
+  "recipients": [
+    "mentor@example.com"
+  ],
+  "estimatedResponseWindow": "Within 24 hours",
+  "createdAt": "2026-02-16T23:32:17.121Z",
+  "correlationId": "conv-1771284735283"
+}
