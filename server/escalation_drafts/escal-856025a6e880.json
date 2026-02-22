@@ -1,0 +1,18 @@
+{
+  "escalationId": "escal-856025a6e880",
+  "query": "should i be using ai for my tasks",
+  "conversation": [
+    "assistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform."
+  ],
+  "subject": "Clarification Request: Academic Integrity Policy regarding AI Usage",
+  "body": "Dear Mentor Team,\n\nI hope you are having a productive week. I am escalating a query from a student regarding the permissible use of Artificial Intelligence (AI) tools for their course assignments.\n\nThe student is seeking guidance on whether they should be using AI for their specific tasks. This touches on the fundamental concepts of Academic Integrity and the specific Acceptable Use Policy defined for this curriculum. To ensure the student maintains academic honesty and understands the boundaries between AI assistance and original work, clear guidance is needed.\n\nI have initiated contact with the student, but as an automated assistant, I cannot provide specific policy interpretations or course-specific permissions. \n\nSuggested Next Steps: Could you please provide the student with the specific guidelines or the 'AI use' section of the course syllabus? This will clarify if AI is prohibited, allowed for brainstorming, or permitted with proper attribution for this specific module.\n\nThank you for your support in guiding the student toward successful and compliant learning habits.",
+  "recipients": [
+    "mentor@example.com",
+    "course_facilitator@example.com"
+  ],
+  "estimatedResponseWindow": "24-48 business hours",
+  "createdAt": "2026-02-22T10:16:29.383Z",
+  "correlationId": "conv-1771755363438",
+  "sentAt": "2026-02-22T10:16:48.377Z",
+  "messageId": "<054ca7d4-3b02-77ea-4618-6c54741426af@gmail.com>"
+}

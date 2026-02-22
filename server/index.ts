@@ -135,11 +135,12 @@ app.post('/api/chat', validateChatInput, async (req: express.Request, res: expre
     // Log the query
     logQuery(message, metadata?.source || 'general');
 
-    // Pre-check: if the query requires human judgement, escalate immediately with a draft
+    // Pre-check: if the query likely requires human judgement, *suggest* escalation
+    // (do not automatically escalate). Return a draft so the user can choose to send it.
     if (isJudgementRequired(message)) {
       try {
         const draft = await generateEscalationDraft({ query: message, conversation: Array.isArray(conversationHistory) ? conversationHistory.map((h: any) => `${h.role}: ${h.content}`) : [], category: metadata?.source, correlationId: `conv-${Date.now()}` });
-        return res.status(200).json({ escalated: true, escalationId: draft.escalationId, draft });
+        return res.status(200).json({ escalated: false, escalationSuggested: true, escalationId: draft.escalationId, draft });
       } catch (err) {
         // Fall back to continuing to generate a response if draft generation fails
         console.error('Failed to generate escalation draft:', err);

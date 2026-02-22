@@ -96,6 +96,7 @@ interface ChatState {
   isTyping: boolean;
   lastHighlight?: HighlightSourceInfo;
   pendingEscalation?: { escalationId: string; subject: string; body: string; recipients: string[] };
+  suggestedEscalation?: { escalationId: string; subject: string; body: string; recipients: string[] };
   editingMessageId?: string;
   editingContent: string;
   searchQuery: string;
@@ -115,7 +116,9 @@ type ChatAction =
   | { type: 'setEditingContent'; value: string }
   | { type: 'setSearchQuery'; value: string }
   | { type: 'setPendingEscalation'; draft?: { escalationId: string; subject: string; body: string; recipients: string[] } }
+  | { type: 'setSuggestedEscalation'; draft?: { escalationId: string; subject: string; body: string; recipients: string[] } }
   | { type: 'clearPendingEscalation' }
+  | { type: 'clearSuggestedEscalation' }
   | { type: 'clearMessages' }
   | { type: 'setSources'; sources: Array<{ id: string; title: string; type: string }> };
 
@@ -162,8 +165,12 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
       return { ...state, searchQuery: action.value };
       case 'setPendingEscalation':
         return { ...state, pendingEscalation: action.draft };
+      case 'setSuggestedEscalation':
+        return { ...state, suggestedEscalation: action.draft };
       case 'clearPendingEscalation':
         return { ...state, pendingEscalation: undefined };
+      case 'clearSuggestedEscalation':
+        return { ...state, suggestedEscalation: undefined };
     case 'setSources':
       return { ...state, sourceSuggestions: action.sources };
     case 'clearMessages':
@@ -340,13 +347,23 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
         metadata: apiMetadata,
       });
 
-      // If backend decided to escalate and returned a draft, surface it for user review
-      if (response.escalated && response.draft) {
+      // If backend returned a draft:
+      // - auto-escalated responses (response.escalated) still open the draft for review
+      // - suggested escalations (response.escalationSuggested) only *suggest* escalation; show a confirmation option first
+      if (response.draft) {
         try {
-          dispatch({ type: 'setPendingEscalation', draft: { escalationId: response.draft.escalationId, subject: response.draft.subject, body: response.draft.body, recipients: response.draft.recipients || [] } });
+          const draft = { escalationId: response.draft.escalationId, subject: response.draft.subject, body: response.draft.body, recipients: response.draft.recipients || [] };
+          if (response.escalated) {
+            dispatch({ type: 'setPendingEscalation', draft });
+          } else if (response.escalationSuggested) {
+            dispatch({ type: 'setSuggestedEscalation', draft });
+          }
         } catch {}
+        const message = response.escalated
+          ? '🔔 Your question has been escalated for human review. A draft email has been prepared for you to review and send.'
+          : '🔔 This question may require human review. A draft email has been prepared — would you like to escalate it to a human reviewer?';
         return {
-          content: `🔔 Your question has been escalated for human review. A draft email has been prepared for you to review and send.`,
+          content: message,
           sources: [],
         };
       }
@@ -573,6 +590,25 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
     } finally {
       dispatch({ type: 'setTyping', value: false });
     }
+  };
+
+  const handleConfirmSuggestedEscalation = () => {
+    if (!state.suggestedEscalation) return;
+    // Move suggested draft into pendingEscalation so the draft UI appears
+    dispatch({ type: 'setPendingEscalation', draft: state.suggestedEscalation });
+    dispatch({ type: 'clearSuggestedEscalation' });
+  };
+
+  const handleDeclineSuggestedEscalation = () => {
+    dispatch({ type: 'clearSuggestedEscalation' });
+    const declineMsg: ChatMessage = {
+      id: Date.now().toString(),
+      content: 'Okay — I will not escalate this question. Let me know if you want to escalate later.',
+      sender: 'bot',
+      timestamp: new Date().toISOString(),
+      contextType: 'escalation',
+    };
+    dispatch({ type: 'addMessage', message: declineMsg });
   };
 
   const handleUpdateDraftField = (field: 'subject' | 'body' | 'recipients', value: string) => {
@@ -886,6 +922,16 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleSendEscalation}>Send Escalation Email</Button>
                 <Button size="sm" variant="ghost" onClick={() => dispatch({ type: 'clearPendingEscalation' })}>Cancel</Button>
+              </div>
+            </div>
+          )}
+          {/* Suggestion prompt shown when escalation is suggested but not yet confirmed */}
+          {state.suggestedEscalation && !state.pendingEscalation && (
+            <div className="mb-3 p-3 rounded-md border border-border bg-background flex items-center justify-between">
+              <div className="text-sm">🔔 This question may require human review. Would you like to escalate it?</div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleConfirmSuggestedEscalation}>Yes</Button>
+                <Button size="sm" variant="ghost" onClick={handleDeclineSuggestedEscalation}>No</Button>
               </div>
             </div>
           )}

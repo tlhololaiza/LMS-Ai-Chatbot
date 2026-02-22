@@ -1,0 +1,19 @@
+{
+  "escalationId": "escal-eff9c7266413",
+  "query": "I'm having problems reviewing my grades",
+  "conversation": [
+    "assistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.",
+    "user: Hi my name is Tlholo",
+    "assistant: Too many requests. Please wait a moment and try again.",
+    "user: Hi my name is Tlholo",
+    "assistant: Hello Tlholo! It’s great to meet you. Please excuse the technical interruption from my previous message; I am ready to assist you now.\n\nAs your learning assistant, I am here to help you navigate your studies and make the most of this platform. Whether you need help locating your **course syllabus**, understanding specific **learning modules**, or troubleshooting an issue with your **assignment submissions**, I am happy to guide you.\n\nHow can I help you get started today? Are you looking for information on a particular subject, or would you like a quick tour of your **student dashboard**?"
+  ],
+  "subject": "Escalation: review requested — I'm having problems reviewing my grades",
+  "body": "Hello,\n\nThe learning assistant escalated the following learner query for your review:\n\n\"I'm having problems reviewing my grades\"\n\nRecent context:\nassistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.\nuser: Hi my name is Tlholo\nassistant: Too many requests. Please wait a moment and try again.\nuser: Hi my name is Tlholo\nassistant: Hello Tlholo! It’s great to meet you. Please excuse the technical interruption from my previous message; I am ready to assist you now.\n\nAs your learning assistant, I am here to help you navigate your studies and make the most of this platform. Whether you need help locating your **course syllabus**, understanding specific **learning modules**, or troubleshooting an issue with your **assignment submissions**, I am happy to guide you.\n\nHow can I help you get started today? Are you looking for information on a particular subject, or would you like a quick tour of your **student dashboard**?\n\nPlease advise on next steps.\n\nThanks,\nLMS AI Assistant",
+  "recipients": [
+    "mentor@example.com"
+  ],
+  "estimatedResponseWindow": "Within 24 hours",
+  "createdAt": "2026-02-18T21:16:58.823Z",
+  "correlationId": "conv-1771449418318"
+}

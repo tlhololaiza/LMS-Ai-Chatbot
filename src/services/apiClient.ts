@@ -35,6 +35,7 @@ export interface ChatResponse {
   timestamp: string;
   conversationId?: string;
   escalated?: boolean;
+  escalationSuggested?: boolean;
   draft?: any;
 }
 
@@ -107,6 +108,7 @@ export async function sendMessage(request: ChatRequest): Promise<ChatResponse> {
       timestamp: data.timestamp || new Date().toISOString(),
       conversationId: data.conversationId,
       escalated: data.escalated,
+      escalationSuggested: data.escalationSuggested,
       draft: data.draft,
     };
   } catch (error) {
