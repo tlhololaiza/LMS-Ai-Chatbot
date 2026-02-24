@@ -34,6 +34,9 @@ export interface ChatResponse {
   response: string;
   timestamp: string;
   conversationId?: string;
+  escalated?: boolean;
+  escalationSuggested?: boolean;
+  draft?: any;
 }
 
 /**
@@ -104,6 +107,9 @@ export async function sendMessage(request: ChatRequest): Promise<ChatResponse> {
       response: data.response || data.message || '',
       timestamp: data.timestamp || new Date().toISOString(),
       conversationId: data.conversationId,
+      escalated: data.escalated,
+      escalationSuggested: data.escalationSuggested,
+      draft: data.draft,
     };
   } catch (error) {
     if (error instanceof APIError) {
@@ -117,6 +123,20 @@ export async function sendMessage(request: ChatRequest): Promise<ChatResponse> {
       'Network Error'
     );
   }
+}
+
+export async function sendEscalationEmail(payload: { escalationId: string; subject: string; body: string; recipients: string[]; from?: string; }) {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const res = await fetch(`${API_URL}/api/escalation/send`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to send escalation email');
+  }
+  return res.json();
 }
 
 /**

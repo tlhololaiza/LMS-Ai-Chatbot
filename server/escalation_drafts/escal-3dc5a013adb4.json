@@ -1,0 +1,15 @@
+{
+  "escalationId": "escal-3dc5a013adb4",
+  "query": "Grades",
+  "conversation": [
+    "assistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform."
+  ],
+  "subject": "Escalation: review requested — Grades",
+  "body": "Hello,\n\nThe learning assistant escalated the following learner query for your review:\n\n\"Grades\"\n\nRecent context:\nassistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.\n\nPlease advise on next steps.\n\nThanks,\nLMS AI Assistant",
+  "recipients": [
+    "mentor@example.com"
+  ],
+  "estimatedResponseWindow": "Within 24 hours",
+  "createdAt": "2026-02-16T23:41:58.644Z",
+  "correlationId": "conv-1771285316625"
+}

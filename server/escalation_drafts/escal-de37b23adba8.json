@@ -1,0 +1,16 @@
+{
+  "escalationId": "escal-de37b23adba8",
+  "query": "Should I work together with another student on my tasks",
+  "conversation": [
+    "assistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform."
+  ],
+  "subject": "Clarification Requested: Peer Collaboration Policy for Course Assignments",
+  "body": "Dear Course Facilitator,\n\nI hope you are having a productive week. I am writing to seek clarification on the collaboration guidelines for this course.\n\nA student has inquired whether it is permissible to work together with peers on individual course tasks. While collaboration can be a valuable part of the learning process, I want to ensure the student adheres strictly to the specific Academic Integrity and code of conduct policies defined for this module.\n\nSo far, the student has consulted the learning assistant for guidance. To provide them with the most accurate information, I would appreciate it if you could confirm whether tasks are strictly individual or if group study and peer review are encouraged. \n\nSuggested next steps: Could you please point us to the specific section of the syllabus or student handbook that outlines the collaboration policy, or provide a brief statement on the boundaries of peer assistance for these tasks?\n\nBest regards,\n\nLearning Assistant",
+  "recipients": [
+    "mentor@example.com",
+    "facilitator@example.com"
+  ],
+  "estimatedResponseWindow": "24-48 business hours",
+  "createdAt": "2026-02-22T10:07:52.963Z",
+  "correlationId": "conv-1771754853729"
+}
