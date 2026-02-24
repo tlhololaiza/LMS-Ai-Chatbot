@@ -368,13 +368,16 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
         };
       }
 
-      // Get prompt context for citations (still using local RAG)
+      // Only attach sources when the query is genuinely knowledge-related
       const prompt = buildContextAwarePrompt(message, metadata);
-      const enhancedResponse = enhanceResponseWithCitations(response.response, prompt.citations);
+      const hasRelevantSources = prompt.context.relevanceScore > 0.3 && prompt.citations.length > 0;
+      const enhancedResponse = hasRelevantSources
+        ? enhanceResponseWithCitations(response.response, prompt.citations)
+        : response.response;
 
       return {
         content: enhancedResponse,
-        sources: prompt.citations.map((c) => c.sourceId),
+        sources: hasRelevantSources ? prompt.citations.map((c) => c.sourceId) : [],
       };
     } catch (error) {
       // Graceful error handling with fallback message
