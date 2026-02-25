@@ -369,8 +369,10 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
       }
 
       // Only attach sources when the query is genuinely knowledge-related
+      // Skip sources for greetings, simple chat, and low-relevance matches
       const prompt = buildContextAwarePrompt(message, metadata);
-      const hasRelevantSources = prompt.context.relevanceScore > 0.3 && prompt.citations.length > 0;
+      const isSimpleChat = /^(hi|hello|hey|yo|sup|thanks|thank you|ok|okay|bye|goodbye|good morning|good evening|good afternoon)[!?.\s]*$/i.test(message.trim());
+      const hasRelevantSources = !isSimpleChat && prompt.context.relevanceScore > 0.5 && prompt.citations.length > 0;
       const enhancedResponse = hasRelevantSources
         ? enhanceResponseWithCitations(response.response, prompt.citations)
         : response.response;
