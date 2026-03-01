@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import AIChatbot, { AIChatbotRef } from '@/components/features/AIChatbot';
+import POPIADisclaimer from '@/components/features/POPIADisclaimer';
 import { TextSelectionProvider } from '@/contexts/TextSelectionContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -27,12 +28,17 @@ const DashboardLayout: React.FC = () => {
       
       <main className="lg:pl-64 min-h-screen">
         <TextSelectionProvider onExplainText={handleExplainText}>
-          <div className="p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
+          <div className="p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 min-h-screen flex flex-col">
             <Outlet />
+            <footer className="mt-8 border-t border-border pt-4 text-xs text-muted-foreground">
+              POPIA notice: Please do not share sensitive personal information in this LMS. We collect only the data
+              needed to support your learning.
+            </footer>
           </div>
         </TextSelectionProvider>
       </main>
 
+      <POPIADisclaimer />
       <AIChatbot ref={chatbotRef} />
     </div>
   );
