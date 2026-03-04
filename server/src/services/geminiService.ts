@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
-import { knowledgeBase } from '../data/knowledgeBase.js';
+import { AI_CONTEXT, MLAB_TEAM } from '../data/aiContext.js';
 
 dotenv.config();
 
@@ -25,101 +25,112 @@ class GeminiService {
     this.ai = new GoogleGenAI({ apiKey });
     this.modelName = DEFAULT_MODEL;
   }
-  /**
-   * Tool schema: function declaration that the model can call.
-   */
-  private KB_FUNCTION_DECLARATION = {
-    functionDeclarations: [
-      {
-        name: 'searchKB',
-        description: 'Search LMS knowledge base for relevant concepts and FAQs',
-        parameters: {
-          type: 'OBJECT',
-          properties: {
-            query: { type: 'STRING', description: 'Search query string' },
-            limit: { type: 'INTEGER', description: 'Max results', minimum: 1, maximum: 10 },
-          },
-          required: ['query'],
-        },
-      },
-    ],
-  };
 
   /**
-   * Implements the searchKB tool: returns structured results from the KB.
+   * Returns the system instruction that tells the model HOW to behave.
+   * This is passed via Gemini's systemInstruction parameter so the model
+   * treats it as authoritative ground truth, not ignorable user text.
+   * The knowledge data (AI_CONTEXT) is included here so the model cannot
+   * override it with its own training data.
    */
-  private runSearchKB(query: string, limit = 3): { results: Array<{ type: 'concept' | 'faq'; title: string; detail: string }> } {
-    const q = (query || '').toLowerCase();
-    const results: Array<{ type: 'concept' | 'faq'; title: string; detail: string }> = [];
+  private getSystemInstruction(): string {
+    return `You are the CodeTribe LMS AI Assistant — a friendly, helpful learning companion for students at mLab CodeTribe Academy.
 
-    // Concepts
-    for (const c of knowledgeBase.concepts) {
-      const hit = c.title.toLowerCase().includes(q) || c.explanation.toLowerCase().includes(q);
-      if (hit) {
-        results.push({ type: 'concept', title: c.title, detail: c.explanation });
-      }
-      if (results.length >= limit) break;
-    }
+══════════════════════════════════════════════════════════════════
+CRITICAL GROUNDING RULES — YOU MUST FOLLOW THESE EXACTLY:
+══════════════════════════════════════════════════════════════════
+1. ONLY use the KNOWLEDGE BASE below to answer questions about mLab, CodeTribe, team members, courses, tasks, and the LMS platform.
+2. NEVER use your pre-training knowledge about mLab or any similarly named organisation. Your training data is OUTDATED and WRONG for this context.
+3. If someone asks about an mLab team member, role, or fact — look it up ONLY in the KNOWLEDGE BASE below. If it's not there, say "I don't have that information in my knowledge base" and direct them to mlab.co.za.
+4. NEVER fabricate names, roles, or facts. If the answer is not in the knowledge base, SAY SO.
+5. "mLab" means ONLY mLab Southern Africa (mlab.co.za). It is NOT MongoDB's mLab.
+6. For greetings ("Hi", "How are you?"), respond warmly without dumping data.
+7. For off-topic questions (weather, sports, etc.), politely redirect to CodeTribe/mLab topics.
+8. Keep responses concise. Format lists clearly.
+9. When asked "who should I consult", use the WHO TO CONSULT section.
 
-    // FAQs (fill remaining slots)
-    if (results.length < limit) {
-      for (const f of knowledgeBase.faqs) {
-        const hit = f.question.toLowerCase().includes(q) || f.answer.toLowerCase().includes(q);
-        if (hit) {
-          results.push({ type: 'faq', title: f.question, detail: f.answer });
-        }
-        if (results.length >= limit) break;
-      }
-    }
+EXAMPLES OF CORRECT BEHAVIOR:
+- Q: "Who is the COO of mLab?" → A: "The COO of mLab is Tendai Mazhude." (from SECTION 2 below)
+- Q: "Who is the CEO?" → A: "The CEO of mLab is Nicki Koorbanally." (from SECTION 2 below)
+- Q: "Who is John Smith at mLab?" → A: "I don't have information about John Smith in my knowledge base. The full team is listed on mlab.co.za/who-we-are."
+══════════════════════════════════════════════════════════════════
 
-    // If no direct hits, provide top concepts as fallback context
-    if (results.length === 0) {
-      for (const c of knowledgeBase.concepts.slice(0, limit)) {
-        results.push({ type: 'concept', title: c.title, detail: c.explanation });
-      }
-    }
-    return { results };
+${AI_CONTEXT}`;
   }
+
+  // runSearchKB and KB_FUNCTION_DECLARATION removed — the unified AI_CONTEXT is always injected in full.
+
   /**
-   * Find relevant knowledge from knowledge base
+   * Check if the query contains a known team member name.
    */
-  private findRelevantKnowledge(query: string): string {
-    const queryLower = query.toLowerCase();
-    let context = '';
-
-    // Search concepts
-    const relevantConcepts = knowledgeBase.concepts.filter(concept =>
-      queryLower.includes(concept.title.toLowerCase()) ||
-      concept.explanation.toLowerCase().includes(queryLower) ||
-      queryLower.split(' ').some(word => 
-        word.length > 3 && concept.title.toLowerCase().includes(word)
-      )
-    );
-
-    // Search FAQs
-    const relevantFAQs = knowledgeBase.faqs.filter(faq =>
-      queryLower.includes(faq.question.toLowerCase()) ||
-      faq.question.toLowerCase().includes(queryLower)
-    );
-
-    // Add concepts to context
-    if (relevantConcepts.length > 0) {
-      context += '\n📚 Knowledge Base - Concepts:\n';
-      relevantConcepts.slice(0, 2).forEach(concept => {
-        context += `• ${concept.title}: ${concept.explanation}\n`;
-      });
+  private hasNameMatch(query: string, text: string): boolean {
+    const qLower = query.toLowerCase();
+    for (const member of MLAB_TEAM) {
+      const nameLower = member.name.toLowerCase();
+      const nameParts = nameLower.split(' ');
+      // If the query contains any part of a team member's name (surname or first)
+      // AND that name also appears in the text, it's a match
+      const queryHasName = nameParts.some(part => part.length > 3 && qLower.includes(part));
+      const textHasName = nameParts.some(part => part.length > 3 && text.includes(part));
+      if (queryHasName && textHasName) return true;
     }
-
-    // Add FAQs to context
-    if (relevantFAQs.length > 0) {
-      context += '\n❓ Knowledge Base - FAQs:\n';
-      relevantFAQs.slice(0, 2).forEach(faq => {
-        context += `Q: ${faq.question}\nA: ${faq.answer}\n`;
-      });
-    }
-
-    return context;
+    return false;
   }
+
+  /**
+   * Detect if a query is related to mLab, CodeTribe, the LMS platform,
+   * team members, or any topic the mLab website data covers.
+   */
+  private isMlabRelated(query: string): boolean {
+    const q = query.toLowerCase();
+
+    // Direct keyword hits
+    const mlabKeywords = [
+      'mlab', 'codetribe', 'code tribe', 'code-tribe',
+      'facilitator', 'instructor', 'coordinator',
+      'pillar', 'tech skills', 'tech ecosystem', 'tech solution', 'tech start',
+      'boostup', 'launch league', 'iitpsa',
+      'lms', 'task', 'course', 'module', 'lesson', 'assignment', 'due date',
+      'progress', 'enroll', 'enrolled',
+      'consult', 'who should i', 'who can i', 'who do i',
+      'selection criteria', 'apply', 'application',
+      'npc', 'not-for-profit', 'b-bbee',
+      'innovation hub', 'dsi', 'csir',
+      'soweto', 'tembisa', 'tshwane', 'polokwane', 'galeshewe',
+      'giz', 'farmru', 'mafats', 'zirra', 'mpowa', 'arc hub',
+    ];
+    if (mlabKeywords.some(kw => q.includes(kw))) return true;
+
+    // Check if the query mentions any team member by name
+    for (const member of MLAB_TEAM) {
+      const nameParts = member.name.toLowerCase().split(' ');
+      if (nameParts.some(part => part.length > 3 && q.includes(part))) return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Public method: check if the knowledge base has relevant content for a query.
+   * Used by the server to decide whether to skip escalation.
+   */
+  hasKBRelevance(query: string): boolean {
+    // If it's mLab-related, we always have relevant data
+    if (this.isMlabRelated(query)) return true;
+
+    // Check if the query mentions any programming concept covered by the KB
+    const q = query.toLowerCase();
+    const programmingKeywords = [
+      'react', 'typescript', 'node', 'express', 'mongodb', 'mongoose',
+      'component', 'jsx', 'props', 'state', 'hook', 'usestate', 'useeffect',
+      'usereducer', 'virtual dom', 'api', 'rest', 'async', 'await',
+      'closure', 'interface', 'generic', 'react native',
+    ];
+    return programmingKeywords.some(kw => q.includes(kw));
+  }
+
+  // Knowledge context is now embedded directly in getSystemInstruction()
+  // so it's sent via Gemini's systemInstruction parameter (ground truth).
 
   /**
    * Generate AI response with conversation history and knowledge base
@@ -129,33 +140,27 @@ class GeminiService {
     conversationHistory: ChatMessage[] = []
   ): Promise<string> {
     try {
-      // Find relevant knowledge from knowledge base
-      const knowledgeContext = this.findRelevantKnowledge(userMessage);
-      
-      // Build prompt with context
-      let prompt = 'You are a helpful LMS learning assistant.\n\n';
-      
-      // Add knowledge base context if found
-      if (knowledgeContext) {
-        prompt += knowledgeContext + '\n';
-        prompt += 'Use the above knowledge base information to provide accurate, detailed responses.\n\n';
-      }
-      
-      // Add recent conversation (last 3 messages for context)
-      if (conversationHistory.length > 0) {
-        prompt += 'Recent conversation:\n';
-        conversationHistory.slice(-3).forEach(msg => {
-          prompt += `${msg.role}: ${msg.content}\n`;
-        });
-        prompt += '\n';
-      }
-      
-      prompt += `Student question: ${userMessage}\n\n`;
-      prompt += 'Provide a clear, educational response. If you used the knowledge base, mention relevant concepts naturally in your explanation.';
+      const systemInstruction = this.getSystemInstruction();
 
-  // Call Gemini API (new genai client)
-  const result = await this.ai.models.generateContent({ model: this.modelName, contents: prompt });
-  const response = (result as any).text ?? '';
+      // Build user prompt with history + question only (KB is in systemInstruction)
+      const historyText = conversationHistory
+        .slice(-3)
+        .map((m) => `${m.role}: ${m.content}`)
+        .join('\n');
+
+      let userPrompt = '';
+      if (historyText) {
+        userPrompt += `Recent conversation:\n${historyText}\n\n`;
+      }
+      userPrompt += `Student question: ${userMessage}`;
+
+      // Use systemInstruction so Gemini treats our KB as ground truth
+      const result = await this.ai.models.generateContent({
+        model: this.modelName,
+        config: { systemInstruction },
+        contents: userPrompt,
+      });
+      const response = (result as any).text ?? '';
       
       return response;
     } catch (error: unknown) {
@@ -242,17 +247,20 @@ class GeminiService {
     conversationHistory: ChatMessage[] = []
   ): Promise<string> {
     try {
-      // Build a single prompt with history + KB context (new client minimal approach)
       const historyText = conversationHistory
         .slice(-3)
         .map((m) => `${m.role}: ${m.content}`)
         .join('\n');
 
-      const knowledgeContext = this.findRelevantKnowledge(userMessage);
-      const prompt = `${historyText ? `Recent conversation:\n${historyText}\n\n` : ''}${knowledgeContext ? `Context:\n${knowledgeContext}\n\n` : ''}Question: ${userMessage}`;
+      const systemInstruction = this.getSystemInstruction();
+      const userPrompt = `${historyText ? `Recent conversation:\n${historyText}\n\n` : ''}Question: ${userMessage}`;
 
-  const result = await this.ai.models.generateContent({ model: this.modelName, contents: prompt });
-  const text = (result as any).text ?? '';
+      const result = await this.ai.models.generateContent({
+        model: this.modelName,
+        config: { systemInstruction },
+        contents: userPrompt,
+      });
+      const text = (result as any).text ?? '';
       return text || '';
     } catch (error: unknown) {
       console.error('Gemini Agent Error:', error);
@@ -273,16 +281,19 @@ class GeminiService {
     conversationHistory: ChatMessage[] = []
   ): Promise<string> {
     try {
-      // New client does not expose function-calling in the same shape.
-      // Emulate tool-calling by proactively running searchKB and injecting results.
-      const toolOutput = this.runSearchKB(userMessage, 3);
       const historyText = conversationHistory
         .slice(-3)
         .map((m) => `${m.role}: ${m.content}`)
         .join('\n');
-      const prompt = `${historyText ? `Recent conversation:\n${historyText}\n\n` : ''}Tool: searchKB results:\n${JSON.stringify(toolOutput.results, null, 2)}\n\nQuestion: ${userMessage}`;
-  const result = await this.ai.models.generateContent({ model: this.modelName, contents: prompt });
-  const text = (result as any).text ?? '';
+      const systemInstruction = this.getSystemInstruction();
+      const userPrompt = `${historyText ? `Recent conversation:\n${historyText}\n\n` : ''}Question: ${userMessage}`;
+
+      const result = await this.ai.models.generateContent({
+        model: this.modelName,
+        config: { systemInstruction },
+        contents: userPrompt,
+      });
+      const text = (result as any).text ?? '';
       return text || '';
     } catch (error: unknown) {
       console.error('Gemini Agent Tools Error:', error);
@@ -306,10 +317,16 @@ class GeminiService {
       const historyText = conversationHistory
         .slice(-3)
         .map((m) => `${m.role}: ${m.content}`)
-        .join(' ');
-      const prompt = `${historyText ? `${historyText} ` : ''}${userMessage}`;
-  const result = await this.ai.models.generateContent({ model: this.modelName, contents: prompt });
-  const full = (result as any).text ?? '';
+        .join('\n');
+      const systemInstruction = this.getSystemInstruction();
+      const userPrompt = `${historyText ? `Recent conversation:\n${historyText}\n\n` : ''}Question: ${userMessage}`;
+
+      const result = await this.ai.models.generateContent({
+        model: this.modelName,
+        config: { systemInstruction },
+        contents: userPrompt,
+      });
+      const full = (result as any).text ?? '';
       const words = full.split(/\s+/);
       const chunkSize = 8;
       for (let i = 0; i < words.length; i += chunkSize) {
