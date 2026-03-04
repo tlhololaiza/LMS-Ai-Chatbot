@@ -5,12 +5,20 @@ import { logQuery, logResponseOutcome, logEscalationEvent, verifyLogChain } from
 import { GeminiService } from './src/services/geminiService.js';
 import { generateEscalationDraft, sendEscalationEmail } from './src/services/escalationMailer.js';
 import { isJudgementRequired } from './src/logic/escalationThreshold.js';
+import { AI_CONTEXT } from './src/data/aiContext.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 let geminiService: GeminiService;
 try {
   geminiService = new GeminiService();
+  // ── Startup diagnostics ─────────────────────────────────────
+  console.log('╔══════════════════════════════════════════════════╗');
+  console.log('║        CodeTribe LMS — AI Service Ready         ║');
+  console.log('╠══════════════════════════════════════════════════╣');
+  console.log(`║  Model : ${geminiService.modelName.padEnd(39)}║`);
+  console.log(`║  KB    : ${String(AI_CONTEXT.length).padEnd(6)} chars loaded ✓${' '.padEnd(29)}║`);
+  console.log('╚══════════════════════════════════════════════════╝');
 } catch (err) {
   console.error('Failed to initialize GeminiService:', err);
   // Fallback shim to keep the server running with clear error messages
@@ -41,10 +49,10 @@ app.get('/api/models', async (_req: express.Request, res: express.Response) => {
   }
 });
 
-// Rate limiting configuration (30 requests per minute per IP)
+// Rate limiting configuration — generous limit; Gemini API has its own quota
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 30, // 30 requests per minute
+  max: 200, // 200 requests per minute (effectively unlimited for normal use)
   message: {
     error: 'Too many requests',
     message: 'Please wait a moment before sending more messages.',
@@ -136,8 +144,8 @@ app.post('/api/chat', validateChatInput, async (req: express.Request, res: expre
     logQuery(message, metadata?.source || 'general');
 
     // Pre-check: if the query likely requires human judgement, *suggest* escalation
-    // (do not automatically escalate). Return a draft so the user can choose to send it.
-    if (isJudgementRequired(message)) {
+    // BUT skip escalation if the knowledge base has relevant content that can answer the question.
+    if (isJudgementRequired(message) && !geminiService.hasKBRelevance(message)) {
       try {
         const draft = await generateEscalationDraft({ query: message, conversation: Array.isArray(conversationHistory) ? conversationHistory.map((h: any) => `${h.role}: ${h.content}`) : [], category: metadata?.source, correlationId: `conv-${Date.now()}` });
         return res.status(200).json({ escalated: false, escalationSuggested: true, escalationId: draft.escalationId, draft });

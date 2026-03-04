@@ -2,7 +2,7 @@ import { User, Course, Task, Announcement } from '@/types/lms';
 
 export const currentUser: User = {
   id: '1',
-  name: 'Tlholo Tshwane',
+  name: 'Pule Matlhape',
   email: 'tlholo.tshwane@gmail.com',
   role: 'learner',
   avatar: undefined,
