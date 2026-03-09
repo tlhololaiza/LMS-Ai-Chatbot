@@ -7,7 +7,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "dev": "tsx watch index.ts",
-    "start": "tsx index.ts"
+     "start": "tsx [index.ts](http://_vscodecontentref_/18)"
   },
   "keywords": [],
   "author": "",
