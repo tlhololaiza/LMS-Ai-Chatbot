@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "start": "cd server && npm start"
   },
   "dependencies": {
     "@google/genai": "^1.41.0",
