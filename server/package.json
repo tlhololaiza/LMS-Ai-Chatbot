@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "dev": "tsx watch index.ts"
+    "dev": "tsx watch index.ts",
+    "start": "tsx index.ts"
   },
   "keywords": [],
   "author": "",
