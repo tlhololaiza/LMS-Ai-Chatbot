@@ -169,32 +169,56 @@ You must add any secrets and config values your backend needs.
 
 ---
 
-## 7. Trigger first deploy and verify health (90%)
+## 7. Trigger first deploy and verify health (90%) ✅ (Done)
 
 Render will usually start the first deploy automatically after you create the service. If not, you can trigger it manually.
 
-1. In your Render Web Service page, click **"Manual Deploy" → "Deploy latest commit"** (if needed).
-2. Watch the **Logs** tab:
-   - It should show `npm install` running.
-   - Then it should run `npm start`, which in turn runs `tsx index.ts`.
-3. Look for your startup logs from `index.ts`, for example:
-   - "CodeTribe LMS — AI Service Ready"
-   - Or similar console output.
+1. **Trigger a manual deploy (if needed)** ✅ (Done)
+    - In your Render Web Service page, go to the **top-right corner** and click:
+       - **"Manual Deploy" → "Deploy latest commit"**.
+    - Render will:
+       - Pull the latest commit from your configured GitHub branch (e.g. `main`).
+       - Run the **Build Command** (e.g. `npm install`).
+       - Then run the **Start Command** (`npm start`, which runs `tsx index.ts` in `server/`).
 
-4. Once the service status is **"Live"**, test the health endpoint:
-   - Copy the public URL from Render, e.g.: `https://lms-ai-chatbot-backend.onrender.com`
-   - Open in your browser: `https://lms-ai-chatbot-backend.onrender.com/api/health`
-   - You should see a JSON response similar to:
-     ```json
-     {
-       "ok": true,
-       "service": "chat-api",
-       "status": "healthy",
-       "model": "gemini-pro"
-     }
-     ```
+2. **Monitor the build & startup logs carefully** ✅ (Done)
+    - Switch to the **"Logs"** tab while the deploy is running.
+    - During the build phase you should see:
+       - `npm install` downloading and installing dependencies.
+       - No red `ERR!` messages related to missing scripts or missing packages.
+    - During the start phase you should see something like:
+       - `> npm start`
+       - `> tsx index.ts`
+    - After that, you should see your own application logs from `server/index.ts`, for example:
+       - `CodeTribe LMS — AI Service Ready`
+       - `Server listening on port ...` or similar.
+    - If you see errors here instead (e.g. missing env vars, port in use, etc.), fix them, push a new commit, and trigger another **Manual Deploy**.
 
-> ✅ Once the first deploy is live and `/api/health` responds correctly, mark **90% complete**.
+3. **Confirm the service status is Live** ✅ (Done)
+    - At the top of the Render service page, check the **Status** badge:
+       - It should change from **"Building"** → **"Deploying"** → **"Live"**.
+    - If it shows **"Crashed"** or **"Failed"**, scroll through the logs to see why, fix the issue locally, push a new commit, and redeploy.
+
+4. **Test the backend health endpoint from your browser** ✅ (Done)
+    - When the service is **Live**, copy the **public service URL** from the top of the Render service page, e.g.:
+       - `https://lms-ai-chatbot-backend.onrender.com`
+    - In your browser, open:
+       - `https://lms-ai-chatbot-backend.onrender.com/api/health`
+    - You should see a JSON response similar to:
+       ```json
+       {
+          "ok": true,
+          "service": "chat-api",
+          "status": "healthy",
+          "model": "gemini-pro"
+       }
+       ```
+    - If you get a **timeout**, **5xx error**, or **HTML error page** instead of JSON, re-check:
+       - That the service is **Live** (not rebuilding or crashed).
+       - That your Express app actually defines the `/api/health` route.
+       - That CORS or middleware isn’t blocking the request (a simple GET from the browser should work).
+
+> ✅ Once the first deploy is live and `/api/health` responds correctly, mark **90% complete**. (Completed)
 
 ---
 
@@ -203,17 +227,17 @@ Render will usually start the first deploy automatically after you create the se
 Your frontend (already hosted on Vercel) needs to call the new Render backend URL.
 
 1. Get your Render service URL
-   - Example: `https://lms-ai-chatbot-backend.onrender.com`.
+    - Example: `https://lms-ai-chatbot-backend.onrender.com`.
 
 2. In your frontend `.env` (e.g. root `.env` in `LMS-Ai-Chatbot`), update:
-   - `VITE_API_URL=https://lms-ai-chatbot-backend.onrender.com`
+    - `VITE_API_URL=https://lms-ai-chatbot-backend.onrender.com`
 
 3. Rebuild/redeploy the frontend on Vercel so it picks up the new `VITE_API_URL`.
 
 4. Test the full flow:
-   - Open your Vercel frontend URL.
-   - Use the chatbot as usual.
-   - Confirm chat requests succeed and you see valid responses (or correct error messages when quota is exceeded).
+    - Open your Vercel frontend URL.
+    - Use the chatbot as usual.
+    - Confirm chat requests succeed and you see valid responses (or correct error messages when quota is exceeded).
 
 > ✅ Once the frontend successfully communicates with the backend hosted on Render, mark **100% complete – deployment finished.**
 
@@ -248,7 +272,7 @@ Here’s a quick summary of steps and their contribution to overall completion:
 4. Create Render service & connect GitHub – **45%** ✅
 5. Configure Render Web Service – **65%** ✅
 6. Configure environment variables – **80%** ✅
-7. First deploy & health check – **90%**
+7. First deploy & health check – **90%** ✅
 8. Connect frontend & final test – **100%**
 
 You can use this markdown file as a live checklist while you deploy your backend to Render.
