@@ -71,57 +71,57 @@ In this project we’ll **let Render compile/execute TypeScript** using `tsx`.
 
 ---
 
-## 3. Push latest backend code to GitHub (35%)
+## 3. Push latest backend code to GitHub (35%) ✅ (Done)
 
 Render pulls code from a Git repository (GitHub is most common).
 
-1. **Commit all recent backend changes**
+1. **Commit all recent backend changes** ✅ (Done)
    - From the project root (`LMS-Ai-Chatbot`):
      - Stage changes (especially inside `server/`).
      - Commit with a clear message (e.g. `chore: prepare backend for render`).
 
-2. **Push to your main/default branch**
+2. **Push to your main/default branch** ✅ (Done)
    - Make sure the branch you’ll connect on Render (e.g. `main`) is up to date.
 
-3. **Verify on GitHub**
+3. **Verify on GitHub** ✅ (Done)
    - Open your repo in GitHub and confirm:
      - `server/` folder is present.
      - `server/index.ts` and `server/package.json` are visible with your latest changes.
 
-> ✅ Once changes are pushed and visible on GitHub, mark **35% complete**.
+> ✅ Once changes are pushed and visible on GitHub, mark **35% complete**. (Completed)
 
 ---
 
-## 4. Create a Render account and connect GitHub (45%)
+## 4. Create a Render account and connect GitHub (45%) ✅ (Done)
 
-1. Go to **https://render.com** and **sign up / log in**.
-2. In the Render dashboard, click **"New" → "Web Service"**.
-3. If prompted, **connect your GitHub account** and **authorize Render**.
-4. Select your **LMS-Ai-Chatbot** repository from the list.
+1. Go to **https://render.com** and **sign up / log in**. ✅ (Done)
+2. In the Render dashboard, click **"New" → "Web Service"**. ✅ (Done)
+3. If prompted, **connect your GitHub account** and **authorize Render**. ✅ (Done)
+4. Select your **LMS-Ai-Chatbot** repository from the list. ✅ (Done)
 
-> ✅ After Render is connected to your GitHub and you’ve selected the repo, mark **45% complete**.
+> ✅ After Render is connected to your GitHub and you’ve selected the repo, mark **45% complete**. (Completed)
 
 ---
 
-## 5. Configure the Render Web Service (65%)
+## 5. Configure the Render Web Service (65%) ✅ (Done)
 
 Now you’ll tell Render how to run your backend.
 
-1. **Pick a name**
+1. **Pick a name** ✅ (Done)
    - Example: `lms-ai-chatbot-backend`.
 
-2. **Choose region**
+2. **Choose region** ✅ (Done)
    - Select a region close to your users (e.g. `Frankfurt` or `Oregon`).
 
-3. **Select branch**
+3. **Select branch** ✅ (Done)
    - Usually `main`.
 
-4. **Set the Root Directory** (IMPORTANT)
+4. **Set the Root Directory** (IMPORTANT) ✅ (Done)
    - Since your backend lives in the `server` folder, set:
      - **Root Directory**: `server`
    - This makes Render treat `server/` as the working directory, so it uses `server/package.json` and `server/index.ts`.
 
-5. **Set Build Command**
+5. **Set Build Command** ✅ (Done)
    - Because you want Render to handle TypeScript and you’re running with `tsx`, you can:
      - **Option A (no build step)**: leave Build Command empty or use `npm install` only.
        - Example: `npm install`
@@ -130,33 +130,42 @@ Now you’ll tell Render how to run your backend.
 
    - In both options, TypeScript compilation is handled at **runtime** by `tsx`.
 
-6. **Set Start Command**
+6. **Set Start Command** ✅ (Done)
    - Use your `start` script so Render runs TS via `tsx`:
    - Example:
      - Start Command: `npm start`
    - Under the hood, this will run the `"start": "tsx index.ts"` script in `server/package.json`.
 
-> ✅ Once the Web Service is configured with root directory `server`, build command `npm install`, and start command `npm start`, mark **65% complete**.
+> ✅ Once the Web Service is configured with root directory `server`, build command `npm install`, and start command `npm start`, mark **65% complete**. (Completed)
 
 ---
 
-## 6. Configure environment variables on Render (80%)
+## 6. Configure environment variables on Render (80%) ✅ (Done)
 
 You must add any secrets and config values your backend needs.
 
-1. In the Render Web Service settings, go to **"Environment" → "Environment Variables"**.
+1. In the Render Web Service settings, go to **"Environment" → "Environment Variables"**. ✅ (Done)
 
-2. Add at least the following (names may vary depending on your code):
-   - `GOOGLE_GEMINI_API_KEY` – your Gemini API key used by `GeminiService`.
-   - Any email/escalation-related values if used by `escalationMailer` (check your `server/.env.example` if present).
+2. Based on your current `server/.env`, you should configure the following variables on Render (use these **exact names**):
+   - `GOOGLE_GEMINI_API_KEY` – your Google Gemini API key (used by `GeminiService`).
+   - `GEMINI_MODEL` – the Gemini model name to use (e.g. `gemini-3-flash-preview`).
+   - `PORT` – the port your Express server listens on (Render will set its own port, but keeping this is fine; Render overrides it internally).
+   - `NODE_ENV` – runtime environment (e.g. `development` or `production`).
+   - `SMTP_HOST` – SMTP server host for escalation emails.
+   - `SMTP_PORT` – SMTP server port.
+   - `SMTP_USER` – SMTP username.
+   - `SMTP_PASS` – SMTP password or app-specific password.
+   - `EMAIL_FROM` – the "from" email address used when sending escalation emails.
 
-3. For each variable:
+   You **do not** need to set `VITE_API_URL` on Render for the backend; that one belongs on the frontend (Vercel) environment.
+
+3. For each variable: ✅ (Done)
    - **Key**: the exact variable name (e.g. `GOOGLE_GEMINI_API_KEY`).
    - **Value**: copy from your local `.env` (but **never commit secrets** to Git).
 
-4. Click **Save Changes**.
+4. Click **Save Changes**. ✅ (Done)
 
-> ✅ After all required environment variables are added and saved, mark **80% complete**.
+> ✅ After all required environment variables are added and saved, mark **80% complete**. (Completed)
 
 ---
 
@@ -235,10 +244,10 @@ Here’s a quick summary of steps and their contribution to overall completion:
 
 1. Pre‑deployment checks – **10%** ✅
 2. Prepare project for Render – **25%** ✅
-3. Push latest code to GitHub – **35%**
-4. Create Render service & connect GitHub – **45%**
-5. Configure Render Web Service – **65%**
-6. Configure environment variables – **80%**
+3. Push latest code to GitHub – **35%** ✅
+4. Create Render service & connect GitHub – **45%** ✅
+5. Configure Render Web Service – **65%** ✅
+6. Configure environment variables – **80%** ✅
 7. First deploy & health check – **90%**
 8. Connect frontend & final test – **100%**
 
