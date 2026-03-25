@@ -50,8 +50,3 @@ A lightweight Learning Management System (LMS) frontend paired with an AI-powere
 
 **Contact / Help**
 - For backend logs and debugging, check [server/query_logs.jsonl](server/query_logs.jsonl) and [server/logger.ts](server/logger.ts).
-
-If you want, I can:
-- add a sample `.env.example`,
-- list exact `npm` scripts found in `package.json`, or
-- scaffold a `README` badge section and usage screenshots.
