@@ -45,8 +45,5 @@ A lightweight Learning Management System (LMS) frontend paired with an AI-powere
 - Open issues for bugs or feature requests.
 - Create PRs against `main` and follow existing code style.
 
-**License**
-- MIT (or update as appropriate)
-
 **Contact / Help**
 - For backend logs and debugging, check [server/query_logs.jsonl](server/query_logs.jsonl) and [server/logger.ts](server/logger.ts).
