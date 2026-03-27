@@ -128,34 +128,165 @@ WHO TO CONSULT FOR HELP:
     https://mlab.co.za/contact or +27 012 844 0240
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SECTION 3: CODETRIBE ACADEMY
+SECTION 3: CODETRIBE ACADEMY & PROGRAMMES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CodeTribe Academy was launched on 1 September 2014 as a partnership between
 The Innovation Hub and mLab Southern Africa to increase the skills of young
 ICT enthusiasts through practical development of high-impact and market-
 relevant solutions.
 
-Duration: 6–12 month coding programme
-Technologies taught: ReactJS, Angular, Ionic, Node.js, React Native, MongoDB,
-  TypeScript, HTML5, CSS3, GitHub
-Training locations: Soweto, Tembisa, and Tshwane (Gauteng)
+Main platforms:
+  Login portal: https://codetribe.mlab.co.za
+  Landing page: https://codetribelanding.netlify.app
 Accreditation: IITPSA (Institute of Information Technology Professionals SA)
-Login portal: https://codetribe.mlab.co.za
-Landing page: https://codetribelanding.netlify.app
 
-SELECTION CRITERIA (source: https://mlab.co.za/what-we-do/tech-skills):
-  1. Be a South African citizen with a valid ID
-  2. Be an unemployed youth/graduate between 18 to 35 years of age
-  3. Reside within proximity of a CodeTribe Academy facility
-  4. Not have a criminal record
-  5. Minimum 12 months IT qualification / NQF level 5 with programming
-     background (e.g. Diploma in IT, Degree/BTech/Honours in IT, BCom
-     Informatics, or IT-related field)
-  • Young South African females are encouraged to apply
-  • People with disabilities are encouraged to apply
-  • Final-year students doing work-integrated learning may apply
-  NOTE: Candidates with only Matric/Grade 12/NQF level 4 are only considered
-  under special circumstances with evidence of software development experience.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROGRAMME 1: QCTO CODETRIBE (Foundational)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Purpose: Foundational training for those not well versed in software development
+Aligned with: QCTO requirements and Software Developer SAQA ID 118707
+Duration: 12 months
+Location: Kimberley, Northern Cape
+
+Requirements:
+  • South African ID
+  • Matric certificate
+
+Learning Outcomes:
+  ✓ Foundation in programming fundamentals
+  ✓ Object-Oriented Programming concepts
+  ✓ Working with APIs (Application Programming Interfaces)
+  ✓ Database modelling and ORM (Object Relational Mapping)
+  ✓ MVC (Model-View-Controller) pattern for frameworks like Rails
+  ✓ Application deployment
+
+Application:
+  When applications open (usually April/May), application forms are posted
+  on mLab's social media: LinkedIn, Facebook, Twitter, YouTube
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROGRAMME 2: TRADITIONAL CODETRIBE (In-Person)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Purpose: In-person training for software development graduates or self-taught
+  developers. Introduces in-demand industry technologies to prepare trainees
+  for the job market.
+Duration: 9–12 months
+Locations: Polokwane (Limpopo) and Pietermaritzburg (KwaZulu-Natal)
+
+Requirements:
+  • South African ID
+  • Matric certificate
+  • Prior exposure to software development (formal or informal):
+    - Formal: College/University diploma or degree in IT-related field
+    - Informal: Self-taught, bootcamps, online courses
+
+Technologies Taught:
+  • React / TypeScript (frontend development)
+  • React Native (mobile development)
+  • Node.js (backend development)
+  • PostgreSQL (database)
+
+Learning Outcomes:
+  ✓ Implement UI/UX designs
+  ✓ Build web and mobile applications from scratch
+  ✓ Collaborate with team members on projects
+  ✓ Plan and design database structures
+  ✓ Debug code effectively
+
+Career Paths After Completion:
+  • Fullstack JavaScript Developer
+  • React Developer
+  • Frontend Developer
+  • UI/UX Designer
+  • React Native Developer
+
+Application:
+  When applications open (usually April/May), application forms are posted
+  on mLab's social media: LinkedIn, Facebook, Twitter, YouTube
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROGRAMME 3: VIRTUAL CODETRIBE (Online)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Purpose: Online version of Traditional CodeTribe. Targets software development
+  graduates or self-taught developers. Introduces in-demand industry
+  technologies to prepare for the job market. Enables bigger reach than
+  in-person programmes since trainees can attend from anywhere.
+Duration: 9–12 months
+Delivery: 100% virtual/online (accessible from anywhere in South Africa)
+
+Requirements:
+  • South African ID
+  • Matric certificate
+  • Prior exposure to software development (formal or informal):
+    - Formal: College/University diploma or degree in IT-related field
+    - Informal: Self-taught, bootcamps, online courses
+
+Technologies Taught:
+  • React / TypeScript (frontend development)
+  • React Native (mobile development)
+  • Node.js (backend development)
+  • PostgreSQL (database)
+
+Learning Outcomes:
+  ✓ Implement UI/UX designs
+  ✓ Build web and mobile applications from scratch
+  ✓ Collaborate with team members on projects
+  ✓ Plan and design database structures
+  ✓ Debug code effectively
+
+Career Paths After Completion:
+  • Fullstack JavaScript Developer
+  • React Developer
+  • Frontend Developer
+  • UI/UX Designer
+  • React Native Developer
+
+Application:
+  When applications open (usually April/May), application forms are posted
+  on mLab's social media: LinkedIn, Facebook, Twitter, YouTube
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROGRAMME 4: STEP UP (Systems Administration & Digital Marketing)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Purpose: Virtual programme to train youth to become system administrators and
+  digital marketing professionals. Combines foundational digital skills with
+  specialized training in systems administration and digital marketing.
+Duration: 12 months total (6 months training + 6 months work placements)
+Delivery: 100% virtual/online (accessible from anywhere in South Africa)
+Cost: Free (funded by mLab)
+
+Requirements:
+  • South African ID
+  • Matric certificate
+
+Learning Content (delivered by internal facilitators & external platforms):
+  INTERNAL CONTENT:
+    • HTML & CSS (web basics)
+    • Microsoft Office Suite (Word, Excel, PowerPoint)
+    • Wix (no-code website builder)
+    • Cyber Safety & Digital Security
+    • Digital Marketing fundamentals
+    • 4IR (Fourth Industrial Revolution) concepts
+  EXTERNAL CONTENT (via platforms):
+    • Zoho (systems administration & CRM tools)
+    • Azure Administrator certification preparation
+
+Learning Outcomes:
+  ✓ Plan and create basic websites using HTML/CSS or Wix
+  ✓ Utilise Zoho for Systems Administration and business processes
+  ✓ Protect yourself and businesses from cyber threats
+  ✓ Create and publish marketing content effectively
+  ✓ Create and manage social media content strategically
+
+Career Paths After Completion:
+  • System Administrator
+  • Web Developer
+  • Digital Marketer
+  • Content Creator
+
+Application:
+  When applications open (usually April/May), application forms are posted
+  on mLab's social media: LinkedIn, Facebook, Twitter, YouTube
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SECTION 4: MLAB'S FOUR PILLARS
