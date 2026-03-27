@@ -18,6 +18,7 @@ import {
   BookMarked,
   Link2,
   AlertCircle,
+  Flag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +35,7 @@ import {
   formatPromptForLogging,
 } from '@/utils/promptBuilder';
 import { enhanceResponseWithCitations } from '@/utils/ragService';
-import { sendMessage, APIError, sendEscalationEmail } from '@/services/apiClient';
+import { sendMessage, APIError, sendEscalationEmail, generateEscalationDraft } from '@/services/apiClient';
 import { useToast } from '@/hooks/use-toast';
 
 // Frontend logQuery: send to backend API
@@ -616,6 +617,55 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
     dispatch({ type: 'addMessage', message: declineMsg });
   };
 
+  // Manual escalation: user clicks the escalate button
+  const handleManualEscalation = async () => {
+    if (state.messages.length <= 1) {
+      toast({ title: 'No messages', description: 'Start a conversation before escalating.', variant: 'destructive' });
+      return;
+    }
+
+    dispatch({ type: 'setTyping', value: true });
+    
+    try {
+      // Find the last user message
+      const lastUserMessage = [...state.messages].reverse().find(msg => msg.sender === 'user');
+      const query = lastUserMessage?.content || '';
+      
+      // Get conversation history
+      const conversation = state.messages
+        .filter(msg => msg.sender === 'user' || msg.sender === 'bot')
+        .map(msg => `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.content}`);
+
+      // Call backend to generate escalation draft
+      const draft = await generateEscalationDraft({
+        query,
+        conversation,
+        category: 'general',
+      });
+
+      // Show draft for user review
+      dispatch({ type: 'setPendingEscalation', draft });
+
+      // Add info message
+      const infoMsg: ChatMessage = {
+        id: Date.now().toString(),
+        content: '📋 Escalation draft has been prepared. Please review the details below and click "Send Escalation Email" when ready.',
+        sender: 'bot',
+        timestamp: new Date().toISOString(),
+        contextType: 'escalation',
+      };
+      dispatch({ type: 'addMessage', message: infoMsg });
+    } catch (err) {
+      toast({ 
+        title: 'Escalation failed', 
+        description: err instanceof Error ? err.message : 'Failed to generate escalation draft.',
+        variant: 'destructive'
+      });
+    } finally {
+      dispatch({ type: 'setTyping', value: false });
+    }
+  };
+
   const handleUpdateDraftField = (field: 'subject' | 'body' | 'recipients', value: string) => {
     const current = state.pendingEscalation;
     if (!current) return;
@@ -778,6 +828,15 @@ const AIChatbot = forwardRef<AIChatbotRef>((props, ref) => {
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8" 
+                onClick={handleManualEscalation}
+                title="Escalate to human reviewer"
+              >
+                <Flag className="w-4 h-4 text-orange-500" />
+              </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRegenerate}>
                 <RefreshCcw className="w-4 h-4" />
               </Button>

@@ -143,17 +143,9 @@ app.post('/api/chat', validateChatInput, async (req: express.Request, res: expre
     // Log the query
     logQuery(message, metadata?.source || 'general');
 
-    // Pre-check: if the query likely requires human judgement, *suggest* escalation
-    // BUT skip escalation if the knowledge base has relevant content that can answer the question.
-    if (isJudgementRequired(message) && !geminiService.hasKBRelevance(message)) {
-      try {
-        const draft = await generateEscalationDraft({ query: message, conversation: Array.isArray(conversationHistory) ? conversationHistory.map((h: any) => `${h.role}: ${h.content}`) : [], category: metadata?.source, correlationId: `conv-${Date.now()}` });
-        return res.status(200).json({ escalated: false, escalationSuggested: true, escalationId: draft.escalationId, draft });
-      } catch (err) {
-        // Fall back to continuing to generate a response if draft generation fails
-        console.error('Failed to generate escalation draft:', err);
-      }
-    }
+    // ✅ ESCALATION APPROACH: Manual escalation only (no automatic detection)
+    // Users can click the "Escalate" button in the UI to manually trigger escalation.
+    // The endpoint /api/log-escalation handles manual escalation requests.
 
     // Generate response
     const response = useAgentTools
@@ -254,38 +246,39 @@ app.post('/api/log-query', (req: express.Request, res: express.Response) => {
 // ---------------------------------------------
 // Escalation Logging Endpoint
 // ---------------------------------------------
-app.post('/api/log-escalation', (req: express.Request, res: express.Response) => {
-  const { query, category, reason, escalationType, target, severity, correlationId } = req.body || {};
+app.post('/api/log-escalation', async (req: express.Request, res: express.Response) => {
+  const { query, category, reason, escalationType, target, severity, correlationId, conversation } = req.body || {};
 
-  if (typeof query !== 'string' || query.trim().length === 0) {
-    return res.status(400).json({ error: 'Invalid or missing "query"' });
+  // Validate required fields - only query and category are mandatory
+  if (!query || typeof query !== 'string' || query.trim().length === 0) {
+    return res.status(400).json({ error: 'Missing or invalid "query"' });
   }
-  if (typeof category !== 'string' || category.trim().length === 0) {
-    return res.status(400).json({ error: 'Invalid or missing "category"' });
-  }
-  if (typeof reason !== 'string' || reason.trim().length === 0) {
-    return res.status(400).json({ error: 'Invalid or missing "reason"' });
-  }
-  const allowedTypes = ['human_review', 'support', 'moderation', 'other'];
-  if (!allowedTypes.includes(escalationType)) {
-    return res.status(400).json({ error: 'Invalid "escalationType"' });
+  if (!category || typeof category !== 'string' || category.trim().length === 0) {
+    return res.status(400).json({ error: 'Missing or invalid "category"' });
   }
 
-  // Persist audit log
-  logEscalationEvent({ query, category, reason, escalationType, target, severity, correlationId });
+  // Log escalation event if old-format fields provided (for backward compatibility)
+  if (reason && escalationType) {
+    try {
+      logEscalationEvent({ query, category, reason, escalationType, target, severity, correlationId });
+    } catch (err) {
+      console.error('Failed to log escalation event:', err);
+    }
+  }
 
+  // Generate escalation draft
   try {
-    // Also attempt to generate an escalation email draft and return it to the caller for review
-    (async () => {})();
-  } catch {}
-
-  // Generate draft asynchronously and return immediate acknowledgement
-  generateEscalationDraft({ query, conversation: [], category, correlationId })
-    .then((draft) => res.status(200).json({ ok: true, draft }))
-    .catch((err) => {
-      console.error('Failed to generate draft:', err);
-      res.status(200).json({ ok: true });
+    const draft = await generateEscalationDraft({ 
+      query, 
+      conversation: Array.isArray(conversation) ? conversation : [], 
+      category,
+      correlationId: correlationId || `manual-${Date.now()}`
     });
+    return res.status(200).json({ ok: true, draft });
+  } catch (err) {
+    console.error('Failed to generate escalation draft:', err);
+    return res.status(500).json({ error: 'Failed to generate escalation draft', message: err instanceof Error ? err.message : String(err) });
+  }
 });
 
 // ---------------------------------------------

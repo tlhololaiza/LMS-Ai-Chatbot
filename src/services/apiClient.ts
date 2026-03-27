@@ -125,6 +125,32 @@ export async function sendMessage(request: ChatRequest): Promise<ChatResponse> {
   }
 }
 
+/**
+ * Generate an escalation draft for a conversation
+ * Manually called by user (not automatic detection)
+ */
+export async function generateEscalationDraft(payload: { query: string; conversation?: string[]; category?: string; }): Promise<{ escalationId: string; subject: string; body: string; recipients: string[]; estimatedResponseWindow: string; }> {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const res = await fetch(`${API_URL}/api/log-escalation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: payload.query,
+      conversation: payload.conversation || [],
+      category: payload.category || 'general',
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || err.error || 'Failed to generate escalation draft');
+  }
+  const data = await res.json();
+  if (!data.draft) {
+    throw new Error('No draft returned from server');
+  }
+  return data.draft;
+}
+
 export async function sendEscalationEmail(payload: { escalationId: string; subject: string; body: string; recipients: string[]; from?: string; }) {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
   const res = await fetch(`${API_URL}/api/escalation/send`, {
