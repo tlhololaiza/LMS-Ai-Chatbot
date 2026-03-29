@@ -1,0 +1,20 @@
+{
+  "escalationId": "escal-70d11e45c42c",
+  "query": "What is codetribe",
+  "category": "general",
+  "conversation": [
+    "Assistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.",
+    "User: What is codetribe",
+    "Assistant: Too many requests. Please wait a moment and try again.\n\n---\n### 📚 Sources\n❓ [1] What is CodeTribe Academy? (faq)\n❓ [2] What is CodeTribe? (faq)\n"
+  ],
+  "subject": "Escalation: review requested — What is codetribe",
+  "body": "Hello,\n\nThe learning assistant escalated the following learner query for your review:\n\n\"What is codetribe\"\n\nRecent context:\nAssistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.\nUser: What is codetribe\nAssistant: Too many requests. Please wait a moment and try again.\n\n---\n### 📚 Sources\n❓ [1] What is CodeTribe Academy? (faq)\n❓ [2] What is CodeTribe? (faq)\n\n\nPlease advise on next steps.\n\nThanks,\nLMS AI Assistant",
+  "recipients": [
+    "juniortshwane9@gmail.com"
+  ],
+  "estimatedResponseWindow": "Within 24 hours",
+  "createdAt": "2026-03-29T21:30:54.969Z",
+  "correlationId": "manual-1774819853359",
+  "sentAt": "2026-03-29T21:31:08.571Z",
+  "messageId": "<bf347566-1de4-ef5a-77d7-397ab20020e4@gmail.com>"
+}

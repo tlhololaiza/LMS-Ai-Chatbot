@@ -1,0 +1,20 @@
+{
+  "escalationId": "escal-a2ee6974151b",
+  "query": "I need help understanding React hooks",
+  "category": "general",
+  "conversation": [
+    "User: I need help"
+  ],
+  "subject": "Assistance Needed: Understanding React Hooks - React Course Module 2",
+  "body": "Hi Team,\n\nI hope you are doing well.\n\nI am currently working through Module 2: Adding Interactivity in the React course, but I am finding it difficult to fully grasp the concepts of React hooks, specifically how to manage state with useState and handle side effects with useEffect.\n\nI have reviewed the lesson 'State: A Component's Memory' and tried implementing the practice counter exercises, but I am still struggling with understanding the render cycle and when to use dependency arrays in useEffect.\n\nCould you please provide some additional guidance or perhaps point me toward supplementary resources to help clarify these concepts? I would also appreciate it if we could schedule a brief check-in during lab hours.\n\nBest regards,\nPule Matlhape",
+  "recipients": [
+    "thabo.ndlovu@mlab.co.za",
+    "kabelo.gaotlhaelwe@mlab.co.za",
+    "nokwanda.maranjane@mlab.co.za",
+    "zack.tinga@mlab.co.za",
+    "melvin.musehani@mlab.co.za"
+  ],
+  "estimatedResponseWindow": "24 to 48 business hours",
+  "createdAt": "2026-03-29T20:42:00.280Z",
+  "correlationId": "manual-1774816902464"
+}

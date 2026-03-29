@@ -1,0 +1,19 @@
+{
+  "escalationId": "escal-16b7a0fbbe1a",
+  "query": "I need help understanding React hooks",
+  "category": "general",
+  "conversation": [
+    "User: I need help"
+  ],
+  "subject": "Learning Support Request: Understanding React Hooks Implementation",
+  "body": "Hi Dr. Ndlovu and the CodeTribe Facilitator team,\n\nI hope you are doing well. I am currently progressing through the React course and have reached Module 2: 'Adding Interactivity.'\n\nI'm reaching out because I need some help understanding React Hooks, specifically the transition from basic state to more complex logic like useEffect and useReducer. While I understand the general concept of components, I'm finding it challenging to manage side effects and state snapshots effectively.\n\nSo far, I have completed the 'State: A Component's Memory' lesson and tried building a small practice application to update objects in state, but I am still struggling with the render and commit cycle. \n\nWould it be possible to get some additional guidance or a recommendation for supplementary practice exercises? I would also appreciate a brief check-in during the next lab session if time permits.\n\nThank you for your help!\n\nBest regards,\nPule Matlhape",
+  "recipients": [
+    "thabo.ndlovu@mlab.co.za",
+    "kabelo.gaotlhaelwe@mlab.co.za",
+    "nokwanda.maranjane@mlab.co.za",
+    "zack.tinga@mlab.co.za"
+  ],
+  "estimatedResponseWindow": "24 to 48 business hours",
+  "createdAt": "2026-03-29T20:42:30.140Z",
+  "correlationId": "manual-1774816929140"
+}

@@ -1,0 +1,20 @@
+{
+  "escalationId": "escal-e706d67b1489",
+  "query": "What is codetribe?",
+  "category": "general",
+  "conversation": [
+    "Assistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.",
+    "User: What is codetribe?",
+    "Assistant: CodeTribe Academy is a high-impact coding programme launched on 1 September 2014 through a partnership between **mLab Southern Africa** and **The Innovation Hub**. \n\nIts primary goal is to increase the skills of young ICT enthusiasts through the practical development of market-relevant solutions. Here are a few key details:\n\n*   **Focus:** Training in in-demand technologies like React, TypeScript, Node.js, React Native, and MongoDB.\n*   **Accreditation:** The programme is accredited by the **IITPSA** (Institute of Information Technology Professionals SA).\n*   **Locations:** In-person labs are located in Gauteng (Tshwane, Soweto, Tembisa), Limpopo (Polokwane), and the Northern Cape (Galeshewe), with virtual options also available.\n*   **Impact:** It prepares graduates and self-taught developers for careers such as Fullstack JavaScript Developers, UI/UX Designers, and Mobile Developers.\n\nIs there a specific CodeTribe programme or location you'd like to know more about?\n\n---\n### 📚 Sources\n❓ [1] What is CodeTribe? (faq)\n"
+  ],
+  "subject": "Escalation: General Inquiry Regarding CodeTribe Academy Overview",
+  "body": "Dear CodeTribe Team,\n\nI hope you are doing well. I am reaching out to escalate a general query from a student who is seeking a deeper understanding of the CodeTribe Academy programme.\n\nThe student asked for an overview of CodeTribe. I have already provided foundational information regarding its history (launched in 2014 by mLab and The Innovation Hub), its IITPSA accreditation, and the core technologies covered such as React, TypeScript, and Node.js. \n\nTo ensure the student has the most current information, could you please confirm if there are additional details regarding the 2026 intake or specific regional lab requirements that should be shared? I would appreciate your guidance on the next steps for this student.\n\nBest regards,\nCodeTribe LMS AI Assistant",
+  "recipients": [
+    "juniortshwane9@gmail.com"
+  ],
+  "estimatedResponseWindow": "24 to 48 business hours",
+  "createdAt": "2026-03-29T21:40:50.963Z",
+  "correlationId": "manual-1774820443517",
+  "sentAt": "2026-03-29T21:40:59.778Z",
+  "messageId": "<4e78a791-4bad-1d74-810b-163c4194d8f6@gmail.com>"
+}

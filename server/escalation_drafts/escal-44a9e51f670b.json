@@ -1,0 +1,19 @@
+{
+  "escalationId": "escal-44a9e51f670b",
+  "query": "I need help understanding React hooks",
+  "category": "general",
+  "conversation": [
+    "User: I need help understanding React hooks"
+  ],
+  "subject": "Inquiry: Assistance with React Hooks - Module 2",
+  "body": "Dear Dr. Thabo Ndlovu and the CodeTribe Facilitator team,\n\nI hope this email finds you well. My name is Pule Matlhape, and I am currently working through the React course on the CodeTribe LMS.\n\nI am writing to request additional guidance on React Hooks. While I have completed the lessons in Module 2 regarding State and 'Adding Interactivity', I am finding it challenging to understand the practical implementation of hooks like useState and useEffect in real-world scenarios.\n\nSo far, I have reviewed the core lessons and the supplementary materials provided in the React Course update, but I would appreciate more clarity on when to utilize useReducer instead of useState for complex logic.\n\nCould you please suggest some additional practice exercises or let me know if there is a scheduled check-in where I could ask specific implementation questions?\n\nThank you for your support.\n\nBest regards,\nPule Matlhape",
+  "recipients": [
+    "thabo.ndlovu@mlab.co.za",
+    "facilitator.kabelo@mlab.co.za",
+    "facilitator.nokwanda@mlab.co.za",
+    "facilitator.zack@mlab.co.za"
+  ],
+  "estimatedResponseWindow": "24 to 48 business hours",
+  "createdAt": "2026-03-29T20:41:42.119Z",
+  "correlationId": "manual-1774816874186"
+}

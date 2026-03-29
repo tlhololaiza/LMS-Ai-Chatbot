@@ -27,16 +27,23 @@ function newId() {
 export async function generateEscalationDraft(params: { query: string; conversation?: string[]; category?: string; correlationId?: string; }): Promise<{ escalationId: string; subject: string; body: string; recipients: string[]; estimatedResponseWindow: string; }> {
   const { query, conversation = [], category, correlationId } = params;
 
+  // Use the real configured sender email as the default recipient so the
+  // escalation lands in the admin's inbox, not a hallucinated address.
+  const configuredEmail = process.env.EMAIL_FROM || process.env.SMTP_USER || 'mentor@example.com';
+
   // Build prompt for the AI to produce a JSON payload
   const prompt = `You are an assistant that drafts professional escalation emails to course facilitators or mentors.
-Use the information below to create a concise subject line, a friendly supportive opening, a clear description of the issue, what you tried, and suggested next steps. Also suggest recipients (role-based emails like mentor@example.com) and an estimated response window.
+Use the information below to create a concise subject line, a friendly supportive opening, a clear description of the issue, what you tried, and suggested next steps.
+For the recipients field, you MUST use ONLY this email address: ["${configuredEmail}"]
+Do NOT invent or hallucinate any email addresses. Use ONLY the one provided above.
+Also provide an estimated response window.
 
 Context:
 Query: ${query}
 Category: ${category || 'general'}
 Conversation history (most recent last):\n${conversation.slice(-6).join('\n')}
 
-Return a JSON object with keys: subject, body, recipients (array of emails), estimatedResponseWindow.
+Return a JSON object with keys: subject, body, recipients (array containing ONLY "${configuredEmail}"), estimatedResponseWindow.
 Respond only with valid JSON.`;
 
   let aiText = '';
@@ -76,7 +83,10 @@ LMS AI Assistant`;
 
   const subject = (parsed && parsed.subject) ? String(parsed.subject) : defaultSubject;
   const body = (parsed && parsed.body) ? String(parsed.body) : defaultBody;
-  const recipients = (parsed && Array.isArray(parsed.recipients) && parsed.recipients.length) ? parsed.recipients : ['mentor@example.com'];
+  // Always fall back to the real configured email — never use hallucinated addresses
+  const recipients = (parsed && Array.isArray(parsed.recipients) && parsed.recipients.length)
+    ? parsed.recipients
+    : [configuredEmail];
   const estimatedResponseWindow = (parsed && parsed.estimatedResponseWindow) ? String(parsed.estimatedResponseWindow) : 'Within 24 hours';
 
   const escalationId = newId();
@@ -126,6 +136,11 @@ export async function sendEscalationEmail(params: { escalationId: string; subjec
     auth: {
       user,
       pass,
+    },
+    tls: {
+      // Required for Gmail on some Node.js versions — prevents
+      // "self-signed certificate in certificate chain" errors.
+      rejectUnauthorized: false,
     },
   });
 
