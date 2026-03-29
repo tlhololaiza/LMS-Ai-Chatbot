@@ -4,7 +4,6 @@ import rateLimit from 'express-rate-limit';
 import { logQuery, logResponseOutcome, logEscalationEvent, verifyLogChain } from './logger.js';
 import { GeminiService } from './src/services/geminiService.js';
 import { generateEscalationDraft, sendEscalationEmail } from './src/services/escalationMailer.js';
-import { isJudgementRequired } from './src/logic/escalationThreshold.js';
 import { AI_CONTEXT } from './src/data/aiContext.js';
 
 const app = express();
@@ -14,9 +13,9 @@ try {
   geminiService = new GeminiService();
   // ── Startup diagnostics ─────────────────────────────────────
   console.log('╔══════════════════════════════════════════════════╗');
-  console.log('║        CodeTribe LMS — AI Service Ready         ║');
+  console.log('║        CodeTribe LMS — AI Service Ready          ║');
   console.log('╠══════════════════════════════════════════════════╣');
-  console.log(`║  Model : ${geminiService.modelName.padEnd(39)}║`);
+  console.log(`║  Model : ${geminiService.modelName.padEnd(39)}   ║`);
   console.log(`║  KB    : ${String(AI_CONTEXT.length).padEnd(6)} chars loaded ✓${' '.padEnd(29)}║`);
   console.log('╚══════════════════════════════════════════════════╝');
 } catch (err) {
