@@ -1,0 +1,18 @@
+{
+  "escalationId": "escal-b8c48988f753",
+  "query": "What is codetribe?",
+  "category": "general",
+  "conversation": [
+    "Assistant: Hello! I'm your learning assistant. How can I help you today? I can answer questions about your courses, help with technical concepts, or guide you through the platform.",
+    "User: What is codetribe?",
+    "Assistant: CodeTribe Academy is a high-impact coding programme launched on 1 September 2014 as a partnership between **mLab Southern Africa** and **The Innovation Hub**. \n\nIts main goal is to increase the skills of young ICT enthusiasts through the practical development of market-relevant solutions. The academy is accredited by the **IITPSA** (Institute of Information Technology Professionals SA).\n\nThere are four main versions of the programme:\n*   **QCTO CodeTribe:** Foundational 12-month training based in Kimberley.\n*   **Traditional CodeTribe:** In-person training (9–12 months) for graduates or self-taught developers, located in Polokwane and Pietermaritzburg.\n*   **Virtual CodeTribe:** A 100% online version of the traditional programme accessible from anywhere in South Africa.\n*   **Step Up:** A virtual programme focusing on Systems Administration and Digital Marketing.\n\nAcross these programmes, students learn in-demand technologies such as **React, TypeScript, Node.js, React Native, and MongoDB** to prepare for careers as Fullstack Developers, UI/UX Designers, and more.\n\n---\n### 📚 Sources\n❓ [1] What is CodeTribe? (faq)\n"
+  ],
+  "subject": "Escalated Inquiry: CodeTribe Academy Programme Overview",
+  "body": "Dear CodeTribe Team,\n\nI hope you are having a wonderful day. I am escalating a general inquiry from a student regarding the scope and structure of the CodeTribe Academy.\n\nThe student is interested in learning more about the academy's offerings. I have provided them with an overview of CodeTribe's history since its launch in 2014, its partnership with The Innovation Hub, and its IITPSA accreditation. I also detailed the four main streams: QCTO CodeTribe, Traditional CodeTribe, Virtual CodeTribe, and the Step Up programme.\n\nTo ensure the student has the most current information regarding specific lab locations and upcoming application cycles, could you please provide any additional guidance or brochures they might find useful?\n\nBest regards,\n\nCodeTribe LMS AI Assistant",
+  "recipients": [
+    "juniortshwane9@gmail.com"
+  ],
+  "estimatedResponseWindow": "24 - 48 business hours",
+  "createdAt": "2026-03-29T21:59:11.555Z",
+  "correlationId": "manual-1774821542664"
+}
